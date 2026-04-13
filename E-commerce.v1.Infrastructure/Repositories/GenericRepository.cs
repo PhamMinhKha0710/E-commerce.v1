@@ -23,6 +23,16 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
         return await _dbContext.Set<T>().ToListAsync();
     }
 
+    public async Task<T?> FirstOrDefaultAsync(System.Linq.Expressions.Expression<Func<T, bool>> predicate, params string[] includeProperties)
+    {
+        var query = _dbContext.Set<T>().AsQueryable();
+        foreach (var includeProperty in includeProperties)
+        {
+            query = query.Include(includeProperty);
+        }
+        return await query.FirstOrDefaultAsync(predicate);
+    }
+
     public async Task<T> AddAsync(T entity)
     {
         await _dbContext.Set<T>().AddAsync(entity);
