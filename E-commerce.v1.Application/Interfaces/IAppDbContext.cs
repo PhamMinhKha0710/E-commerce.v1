@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 
 namespace E_commerce.v1.Application.Interfaces;
 
