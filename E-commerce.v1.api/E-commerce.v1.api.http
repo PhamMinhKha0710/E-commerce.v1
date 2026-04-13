@@ -1,6 +1,40 @@
-@E_commerce.v1.api_HostAddress = http://localhost:5197
+@HostAddress = http://localhost:5197
+@JwtToken = replace_with_returned_token
 
-GET {{E_commerce.v1.api_HostAddress}}/weatherforecast/
-Accept: application/json
+### TẠO USER MỚI (REGISTER)
+POST {{HostAddress}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "johndoe@example.com",
+  "password": "SecurePassword123!",
+  "confirmPassword": "SecurePassword123!"
+}
+
+###
+
+### ĐĂNG NHẬP VÀ LẤY TOKEN (LOGIN) -- TÀI KHOẢN ADMIN CHUẨN ĐƯỢC SEEDING SẴN
+POST {{HostAddress}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@mebisoft.com",
+  "password": "123456"
+}
+
+### ĐỔI MỚI TOKEN (REFRESH TOKEN) -- Thay AccessToken và RefreshToken thực tế vào đây
+POST {{HostAddress}}/api/v1/auth/refresh-token
+Content-Type: application/json
+
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR...",
+  "refreshToken": "chuỗi_refresh_token_ngẫu_nhiên"
+}
+
+### TEST GÓC NHÌN BẢO MẬT ROLE ADMIN (Truyền token Admin vào header Authorization)
+GET {{HostAddress}}/api/v1/auth/admin-profile
+Authorization: Bearer {{JwtToken}}
 
 ###
