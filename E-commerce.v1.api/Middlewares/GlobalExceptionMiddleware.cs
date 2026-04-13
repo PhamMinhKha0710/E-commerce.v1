@@ -35,15 +35,31 @@ public class GlobalExceptionMiddleware
         var statusCode = HttpStatusCode.InternalServerError;
         var message = "An internal server error occurred.";
         object? errors = null;
-
-        // Nếu lỗi là do ValidationBehavior văng ra (Tất cả DTOs sai)
-        if (exception is ValidationException validationException)
+        
+        // Mapping HTTP Codes dựa theo loại Exception
+        switch (exception)
         {
-            statusCode = HttpStatusCode.BadRequest;
-            message = "Validation Failed";
-            errors = validationException.Errors
-                .GroupBy(e => e.PropertyName, e => e.ErrorMessage)
-                .ToDictionary(failureGroup => failureGroup.Key, failureGroup => failureGroup.ToArray());
+            case ValidationException validationException:
+                statusCode = HttpStatusCode.BadRequest;
+                message = "Dữ liệu đầu vào không hợp lệ.";
+                errors = validationException.Errors
+                    .GroupBy(e => e.PropertyName, e => e.ErrorMessage)
+                    .ToDictionary(g => g.Key, g => g.ToArray());
+                break;
+                
+            case E_commerce.v1.Domain.Exceptions.BadRequestException badRequestEx:
+                statusCode = HttpStatusCode.BadRequest;
+                message = badRequestEx.Message;
+                break;
+
+            case E_commerce.v1.Domain.Exceptions.NotFoundException notFoundEx:
+                statusCode = HttpStatusCode.NotFound;
+                message = notFoundEx.Message;
+                break;
+                
+            default:
+                message = "An internal server error occurred.";
+                break;
         }
 
         context.Response.StatusCode = (int)statusCode;
