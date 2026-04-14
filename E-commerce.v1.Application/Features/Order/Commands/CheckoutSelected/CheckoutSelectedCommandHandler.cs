@@ -1,4 +1,5 @@
 using System.Data;
+using E_commerce.v1.Application.Common;
 using E_commerce.v1.Application.Features.Order.Commands.Checkout;
 using E_commerce.v1.Application.Interfaces;
 using E_commerce.v1.Domain.Entities;
@@ -63,6 +64,7 @@ public class CheckoutSelectedCommandHandler : IRequestHandler<CheckoutSelectedCo
         }
 
         var now = DateTime.UtcNow;
+        Guid? appliedCouponId = null;
         var order = new Domain.Entities.Order
         {
             UserId = request.UserId,
@@ -88,14 +90,48 @@ public class CheckoutSelectedCommandHandler : IRequestHandler<CheckoutSelectedCo
             });
         }
 
-        order.Subtotal = order.Items.Sum(i => i.UnitPrice * i.Quantity);
-        order.DiscountTotal = order.Items.Sum(i => i.Discount * i.Quantity);
-        order.GrandTotal = order.Items.Sum(i => i.LineTotal);
+        order.Subtotal = order.Items.Sum(i => i.LineTotal);
+
+        if (cart.AppliedCouponId.HasValue)
+        {
+            var coupon = await _context.Coupons.FirstOrDefaultAsync(c => c.Id == cart.AppliedCouponId.Value, cancellationToken);
+            if (coupon == null)
+                throw new BadRequestException("Mã giảm giá không còn tồn tại.");
+
+            order.CouponDiscount = CouponCalculator.ValidateAndCalculateDiscount(coupon, order.Subtotal, now);
+            order.CouponCode = coupon.Code;
+            coupon.UsedCount += 1;
+            appliedCouponId = coupon.Id;
+        }
+
+        var amountAfterCoupon = order.Subtotal - order.CouponDiscount;
+        var rank = (await _context.Users
+            .Where(u => u.Id == request.UserId)
+            .Select(u => u.LoyaltyRank)
+            .FirstOrDefaultAsync(cancellationToken));
+
+        order.RankAtCheckout = rank;
+        var rankDiscountPercent = LoyaltyPolicy.GetRankDiscountPercent(rank);
+        order.RankDiscount = decimal.Round(amountAfterCoupon * rankDiscountPercent, 2, MidpointRounding.AwayFromZero);
+        order.DiscountTotal = order.CouponDiscount + order.RankDiscount;
+        order.GrandTotal = Math.Max(0, order.Subtotal - order.DiscountTotal);
+
+        if (appliedCouponId.HasValue)
+        {
+            _context.CouponRedemptions.Add(new CouponRedemption
+            {
+                CouponId = appliedCouponId.Value,
+                UserId = request.UserId,
+                OrderId = order.Id,
+                DiscountAmount = order.CouponDiscount,
+                RedeemedAt = now
+            });
+        }
 
         _context.Orders.Add(order);
         _context.CartItems.RemoveRange(selectedItems);
-
         await _context.SaveChangesAsync(cancellationToken);
+
         await transaction.CommitAsync(cancellationToken);
 
         return new CheckoutResponse
@@ -103,7 +139,10 @@ public class CheckoutSelectedCommandHandler : IRequestHandler<CheckoutSelectedCo
             OrderId = order.Id,
             OrderNumber = order.OrderNumber,
             GrandTotal = order.GrandTotal,
-            PaymentMethod = order.PaymentMethod
+            PaymentMethod = order.PaymentMethod,
+            CouponDiscount = order.CouponDiscount,
+            RankDiscount = order.RankDiscount,
+            CouponCode = order.CouponCode
         };
     }
 }

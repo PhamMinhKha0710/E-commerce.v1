@@ -30,6 +30,10 @@ public class GetOrderByIdQueryHandler : IRequestHandler<GetOrderByIdQuery, Order
                 Subtotal = o.Subtotal,
                 DiscountTotal = o.DiscountTotal,
                 GrandTotal = o.GrandTotal,
+                CouponDiscount = o.CouponDiscount,
+                RankDiscount = o.RankDiscount,
+                CouponCode = o.CouponCode,
+                RankAtCheckout = o.RankAtCheckout,
                 CreatedAt = o.CreatedAt,
                 Items = o.Items.Select(i => new OrderItemDto
                 {

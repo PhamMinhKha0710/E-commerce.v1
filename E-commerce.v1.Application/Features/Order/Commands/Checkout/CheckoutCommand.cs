@@ -11,4 +11,7 @@ public class CheckoutResponse
     public string OrderNumber { get; set; } = string.Empty;
     public decimal GrandTotal { get; set; }
     public PaymentMethod PaymentMethod { get; set; }
+    public decimal CouponDiscount { get; set; }
+    public decimal RankDiscount { get; set; }
+    public string? CouponCode { get; set; }
 }
