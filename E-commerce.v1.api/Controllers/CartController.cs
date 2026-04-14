@@ -1,10 +1,12 @@
 using E_commerce.v1.Application.DTOs.Cart;
 using E_commerce.v1.Application.Features.Cart.Commands;
 using E_commerce.v1.Application.Features.Cart.Queries;
+using E_commerce.v1.Application.Features.Order.Commands.Checkout;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace E_commerce.v1.api.Controllers;
 
@@ -32,6 +34,17 @@ public class CartController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Đồng bộ giỏ guest (localStorage) vào DB sau khi đăng nhập.
+    /// Merge: mỗi sản phẩm quantity = số lượng trên DB + số lượng từ FE (không dùng giá từ client — giá lấy khi GET cart/checkout).
+    /// </summary>
+    [HttpPost("sync")]
+    public async Task<ActionResult<CartDto>> SyncCart([FromBody] SyncCartRequest request)
+    {
+        var userId = GetUserIdFromToken();
+        var result = await _mediator.Send(new SyncCartCommand(userId, request.Items));
+        return Ok(result);
+    }
 
     /// Thêm sản phẩm vào giỏ hàng
 
@@ -91,15 +104,24 @@ public class CartController : ControllerBase
         return NoContent();
     }
 
+    /// Checkout giỏ hàng hiện tại thành đơn hàng.
+    [HttpPost("checkout")]
+    public async Task<ActionResult<CheckoutResponse>> Checkout()
+    {
+        var userId = GetUserIdFromToken();
+        var result = await _mediator.Send(new CheckoutCommand(userId));
+        return CreatedAtAction(nameof(Checkout), new { id = result.OrderId }, result);
+    }
+
 
     /// Trích xuất UserId từ JWT Token
     private Guid GetUserIdFromToken()
     {
-        var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub);
-        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-        {
+        // JwtBearer may map "sub" to NameIdentifier; accept both.
+        var raw = User.FindFirstValue(JwtRegisteredClaimNames.Sub)
+            ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(raw) || !Guid.TryParse(raw, out var userId))
             throw new UnauthorizedAccessException("Unable to extract user ID from token.");
-        }
         return userId;
     }
 }
