@@ -23,7 +23,10 @@ public class GlobalExceptionMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, ex.Message);
+            if (ex is UnauthorizedAccessException)
+                _logger.LogWarning(ex, ex.Message);
+            else
+                _logger.LogError(ex, ex.Message);
             await HandleExceptionAsync(context, ex);
         }
     }
@@ -55,6 +58,11 @@ public class GlobalExceptionMiddleware
             case E_commerce.v1.Domain.Exceptions.NotFoundException notFoundEx:
                 statusCode = HttpStatusCode.NotFound;
                 message = notFoundEx.Message;
+                break;
+
+            case UnauthorizedAccessException unauthorizedEx:
+                statusCode = HttpStatusCode.Unauthorized;
+                message = unauthorizedEx.Message;
                 break;
                 
             default:
