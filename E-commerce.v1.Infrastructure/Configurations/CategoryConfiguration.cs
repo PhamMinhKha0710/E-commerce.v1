@@ -16,9 +16,23 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
             .IsRequired()
             .HasMaxLength(255);
 
-        // Global Query Filter for Soft Delete
+        builder.Property(c => c.Slug)
+            .IsRequired()
+            .HasMaxLength(255);
+
+        builder.Property(c => c.Image)
+            .HasMaxLength(2048);
+
+        builder.HasIndex(c => c.Slug)
+            .IsUnique();
+
+        builder.HasOne(c => c.Parent)
+            .WithMany(c => c.Children)
+            .HasForeignKey(c => c.ParentCategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasQueryFilter(c => !c.IsDeleted);
-        
+
         builder.HasMany(c => c.Products)
             .WithOne(p => p.Category)
             .HasForeignKey(p => p.CategoryId)
