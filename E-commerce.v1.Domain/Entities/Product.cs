@@ -28,13 +28,14 @@ public class Product : BaseEntity
 
     public int Priority { get; set; }
 
-    /// <summary>Tham chiếu tài liệu/ảnh (lưu dạng JSON trong DB).</summary>
+
     public List<string> DocumentIds { get; set; } = new();
 
     public int? StoreId { get; set; }
 
     public Guid CategoryId { get; set; }
     public virtual Category Category { get; set; } = null!;
+    public ICollection<Review> Reviews { get; set; } = new List<Review>();
 
     public bool IsDeleted { get; set; } = false;
 }

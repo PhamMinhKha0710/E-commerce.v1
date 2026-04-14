@@ -5,6 +5,8 @@ using E_commerce.v1.Application.Features.Products.Commands.DeleteProduct;
 using E_commerce.v1.Application.Features.Products.Commands.UpdateProduct;
 using E_commerce.v1.Application.Features.Products.Queries.GetProductById;
 using E_commerce.v1.Application.Features.Products.Queries.GetProducts;
+using E_commerce.v1.Application.Features.Reviews.Queries.GetProductReviews;
+using E_commerce.v1.Application.DTOs.Review;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -33,6 +35,18 @@ public class ProductsController : ControllerBase
     public async Task<ActionResult<ProductDetailDto>> GetProductById(Guid id)
     {
         var query = new GetProductByIdQuery(id);
+        var result = await _mediator.Send(query);
+        return Ok(result);
+    }
+
+    [HttpGet("{id:guid}/reviews")]
+    public async Task<ActionResult<ProductReviewsSummaryDto>> GetProductReviews(
+        Guid id,
+        [FromQuery] int? page = null,
+        [FromQuery] int? pageNumber = null,
+        [FromQuery] int pageSize = 10)
+    {
+        var query = new GetProductReviewsQuery(id, page, pageNumber, pageSize);
         var result = await _mediator.Send(query);
         return Ok(result);
     }

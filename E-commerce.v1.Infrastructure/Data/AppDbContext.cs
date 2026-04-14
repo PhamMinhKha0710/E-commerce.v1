@@ -19,6 +19,7 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<CartItem> CartItems => Set<CartItem>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<Review> Reviews => Set<Review>();
     public DbSet<Coupon> Coupons => Set<Coupon>();
     public DbSet<CouponRedemption> CouponRedemptions => Set<CouponRedemption>();
 
