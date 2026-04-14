@@ -9,6 +9,11 @@ public interface IAppDbContext
     
     DbSet<E_commerce.v1.Domain.Entities.Category> Categories { get; }
     DbSet<E_commerce.v1.Domain.Entities.Product> Products { get; }
+    DbSet<E_commerce.v1.Domain.Entities.Cart> Carts { get; }
+    DbSet<E_commerce.v1.Domain.Entities.CartItem> CartItems { get; }
+
+    /// <summary>Xóa tracker (dùng khi retry sau vi phạm unique, v.v.).</summary>
+    void ClearChangeTracker();
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
