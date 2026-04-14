@@ -13,6 +13,8 @@ public interface IAppDbContext
     DbSet<E_commerce.v1.Domain.Entities.CartItem> CartItems { get; }
     DbSet<E_commerce.v1.Domain.Entities.Order> Orders { get; }
     DbSet<E_commerce.v1.Domain.Entities.OrderItem> OrderItems { get; }
+    DbSet<E_commerce.v1.Domain.Entities.Coupon> Coupons { get; }
+    DbSet<E_commerce.v1.Domain.Entities.CouponRedemption> CouponRedemptions { get; }
 
     /// <summary>Xóa tracker (dùng khi retry sau vi phạm unique, v.v.).</summary>
     void ClearChangeTracker();

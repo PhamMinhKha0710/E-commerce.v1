@@ -20,6 +20,12 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(x => x.Subtotal).HasColumnType("decimal(18,2)");
         builder.Property(x => x.DiscountTotal).HasColumnType("decimal(18,2)");
         builder.Property(x => x.GrandTotal).HasColumnType("decimal(18,2)");
+        builder.Property(x => x.CouponDiscount).HasColumnType("decimal(18,2)");
+        builder.Property(x => x.RankDiscount).HasColumnType("decimal(18,2)");
+
+        builder.Property(x => x.CouponCode)
+            .HasMaxLength(64);
+
         builder.HasMany(x => x.Items)
             .WithOne(i => i.Order)
             .HasForeignKey(i => i.OrderId)

@@ -13,6 +13,10 @@ public class Order : BaseEntity
     public decimal Subtotal { get; set; }
     public decimal DiscountTotal { get; set; }
     public decimal GrandTotal { get; set; }
+    public decimal CouponDiscount { get; set; }
+    public decimal RankDiscount { get; set; }
+    public string? CouponCode { get; set; }
+    public LoyaltyRank RankAtCheckout { get; set; } = LoyaltyRank.Silver;
 
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
     public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.Cod;
