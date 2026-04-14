@@ -8,6 +8,8 @@ namespace E_commerce.v1.Infrastructure.Data;
 
 public class AppDbContext : DbContext, IAppDbContext
 {
+    private readonly ICurrentUserService _currentUserService;
+
     public DbSet<User> Users => Set<User>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
@@ -15,9 +17,12 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Cart> Carts => Set<Cart>();
     public DbSet<CartItem> CartItems => Set<CartItem>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    public AppDbContext(DbContextOptions<AppDbContext> options, ICurrentUserService currentUserService) : base(options)
     {
+        _currentUserService = currentUserService;
     }
 
     public void ClearChangeTracker() => ChangeTracker.Clear();
@@ -45,15 +50,18 @@ public class AppDbContext : DbContext, IAppDbContext
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
+        var actor = _currentUserService.GetActor();
         foreach (var entry in ChangeTracker.Entries<E_commerce.v1.Domain.Common.BaseEntity>())
         {
             switch (entry.State)
             {
                 case EntityState.Added:
                     entry.Entity.CreatedAt = DateTime.UtcNow;
+                    entry.Entity.CreatedBy = actor;
                     break;
                 case EntityState.Modified:
                     entry.Entity.UpdatedAt = DateTime.UtcNow;
+                    entry.Entity.UpdatedBy = actor;
                     break;
             }
         }
