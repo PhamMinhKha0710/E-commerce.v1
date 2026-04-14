@@ -1,0 +1,28 @@
+using E_commerce.v1.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace E_commerce.v1.Infrastructure.Configurations;
+
+public class OrderConfiguration : IEntityTypeConfiguration<Order>
+{
+    public void Configure(EntityTypeBuilder<Order> builder)
+    {
+        builder.ToTable("Orders");
+        builder.HasKey(x => x.Id);
+
+        builder.Property(x => x.OrderNumber)
+            .IsRequired()
+            .HasMaxLength(64);
+
+        builder.HasIndex(x => x.OrderNumber).IsUnique();
+        
+        builder.Property(x => x.Subtotal).HasColumnType("decimal(18,2)");
+        builder.Property(x => x.DiscountTotal).HasColumnType("decimal(18,2)");
+        builder.Property(x => x.GrandTotal).HasColumnType("decimal(18,2)");
+        builder.HasMany(x => x.Items)
+            .WithOne(i => i.Order)
+            .HasForeignKey(i => i.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}
