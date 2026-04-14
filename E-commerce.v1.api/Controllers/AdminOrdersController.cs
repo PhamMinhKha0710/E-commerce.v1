@@ -21,12 +21,15 @@ public class AdminOrdersController : ControllerBase
     [HttpPatch("{id:guid}/status")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateOrderStatusRequest request)
     {
-        await _mediator.Send(new UpdateOrderStatusCommand(id, request.Status));
+        if (!Enum.IsDefined(typeof(OrderStatus), request.Status))
+            return BadRequest(new { Message = "Trạng thái đơn hàng không hợp lệ." });
+
+        await _mediator.Send(new UpdateOrderStatusCommand(id, (OrderStatus)request.Status));
         return NoContent();
     }
 }
 
 public class UpdateOrderStatusRequest
 {
-    public OrderStatus Status { get; set; }
+    public int Status { get; set; }
 }
