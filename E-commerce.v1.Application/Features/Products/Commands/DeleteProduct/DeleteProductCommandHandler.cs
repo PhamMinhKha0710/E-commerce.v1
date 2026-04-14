@@ -8,10 +8,12 @@ namespace E_commerce.v1.Application.Features.Products.Commands.DeleteProduct;
 public class DeleteProductCommandHandler : IRequestHandler<DeleteProductCommand, bool>
 {
     private readonly IGenericRepository<Product> _repository;
+    private readonly IAppDbContext _dbContext;
 
-    public DeleteProductCommandHandler(IGenericRepository<Product> repository)
+    public DeleteProductCommandHandler(IGenericRepository<Product> repository, IAppDbContext dbContext)
     {
         _repository = repository;
+        _dbContext = dbContext;
     }
 
     public async Task<bool> Handle(DeleteProductCommand request, CancellationToken cancellationToken)
@@ -23,6 +25,7 @@ public class DeleteProductCommandHandler : IRequestHandler<DeleteProductCommand,
         // Soft Delete
         product.IsDeleted = true;
         await _repository.UpdateAsync(product);
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
         return true;
     }
