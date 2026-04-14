@@ -17,4 +17,5 @@ public class User : BaseEntity
     public DateTime? RefreshTokenExpiryTime { get; set; }
     
     public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+    public ICollection<Review> Reviews { get; set; } = new List<Review>();
 }

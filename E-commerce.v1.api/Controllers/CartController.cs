@@ -4,12 +4,11 @@ using E_commerce.v1.Application.Features.Cart.Queries;
 using E_commerce.v1.Application.Features.Coupons.Commands.ApplyCouponToCart;
 using E_commerce.v1.Application.Features.Order.Commands.Checkout;
 using E_commerce.v1.Application.Features.Order.Commands.CheckoutSelected;
+using E_commerce.v1.api.Extensions;
 using E_commerce.v1.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 
 namespace E_commerce.v1.api.Controllers;
 
@@ -31,7 +30,7 @@ public class CartController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<CartDto>> GetCart()
     {
-        var userId = GetUserIdFromToken();
+        var userId = User.GetRequiredUserId();
         var query = new GetCartQuery { UserId = userId };
         var result = await _mediator.Send(query);
         return Ok(result);
@@ -44,7 +43,7 @@ public class CartController : ControllerBase
     [HttpPost("sync")]
     public async Task<ActionResult<CartDto>> SyncCart([FromBody] SyncCartRequest request)
     {
-        var userId = GetUserIdFromToken();
+        var userId = User.GetRequiredUserId();
         var result = await _mediator.Send(new SyncCartCommand(userId, request.Items));
         return Ok(result);
     }
@@ -56,7 +55,7 @@ public class CartController : ControllerBase
     [HttpPost("add")]
     public async Task<ActionResult<Unit>> AddToCart([FromBody] AddToCartCommandRequest request)
     {
-        var userId = GetUserIdFromToken();
+        var userId = User.GetRequiredUserId();
         var command = new AddToCartCommand
         {
             UserId = userId,
@@ -77,7 +76,7 @@ public class CartController : ControllerBase
     [HttpPut("items/{id}")]
     public async Task<ActionResult<Unit>> UpdateCartItem(Guid id, [FromBody] UpdateCartItemRequest request)
     {
-        var userId = GetUserIdFromToken();
+        var userId = User.GetRequiredUserId();
         var command = new UpdateCartItemCommand
         {
             UserId = userId,
@@ -93,7 +92,7 @@ public class CartController : ControllerBase
     [HttpDelete("items/{id:guid}")]
     public async Task<IActionResult> RemoveCartItem(Guid id)
     {
-        var userId = GetUserIdFromToken();
+        var userId = User.GetRequiredUserId();
         await _mediator.Send(new RemoveCartItemCommand(userId, id));
         return NoContent();
     }
@@ -102,7 +101,7 @@ public class CartController : ControllerBase
     [HttpDelete]
     public async Task<IActionResult> ClearCart()
     {
-        var userId = GetUserIdFromToken();
+        var userId = User.GetRequiredUserId();
         await _mediator.Send(new ClearCartCommand(userId));
         return NoContent();
     }
@@ -111,15 +110,18 @@ public class CartController : ControllerBase
     [HttpPost("checkout")]
     public async Task<ActionResult<CheckoutResponse>> Checkout([FromBody] CheckoutRequest request)
     {
-        var userId = GetUserIdFromToken();
-        var result = await _mediator.Send(new CheckoutCommand(userId, request.PaymentMethod));
+        if (!Enum.IsDefined(typeof(PaymentMethod), request.PaymentMethod))
+            return BadRequest(new { Message = "PaymentMethod không hợp lệ." });
+
+        var userId = User.GetRequiredUserId();
+        var result = await _mediator.Send(new CheckoutCommand(userId, (PaymentMethod)request.PaymentMethod));
         return CreatedAtAction(nameof(Checkout), new { id = result.OrderId }, result);
     }
 
     [HttpPost("apply-coupon")]
     public async Task<ActionResult<ApplyCouponToCartResponse>> ApplyCoupon([FromBody] ApplyCouponRequest request)
     {
-        var userId = GetUserIdFromToken();
+        var userId = User.GetRequiredUserId();
         var result = await _mediator.Send(new ApplyCouponToCartCommand(userId, request.CouponCode));
         return Ok(result);
     }
@@ -128,21 +130,12 @@ public class CartController : ControllerBase
     [HttpPost("checkout-selected")]
     public async Task<ActionResult<CheckoutResponse>> CheckoutSelected([FromBody] CheckoutSelectedRequest request)
     {
-        var userId = GetUserIdFromToken();
-        var result = await _mediator.Send(new CheckoutSelectedCommand(userId, request.CartItemIds, request.PaymentMethod));
+        if (!Enum.IsDefined(typeof(PaymentMethod), request.PaymentMethod))
+            return BadRequest(new { Message = "PaymentMethod không hợp lệ." });
+
+        var userId = User.GetRequiredUserId();
+        var result = await _mediator.Send(new CheckoutSelectedCommand(userId, request.CartItemIds, (PaymentMethod)request.PaymentMethod));
         return CreatedAtAction(nameof(CheckoutSelected), new { id = result.OrderId }, result);
-    }
-
-
-    /// Trích xuất UserId từ JWT Token
-    private Guid GetUserIdFromToken()
-    {
-        // JwtBearer may map "sub" to NameIdentifier; accept both.
-        var raw = User.FindFirstValue(JwtRegisteredClaimNames.Sub)
-            ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(raw) || !Guid.TryParse(raw, out var userId))
-            throw new UnauthorizedAccessException("Unable to extract user ID from token.");
-        return userId;
     }
 }
 
@@ -159,13 +152,13 @@ public class UpdateCartItemRequest
 
 public class CheckoutRequest
 {
-    public PaymentMethod PaymentMethod { get; set; }
+    public int PaymentMethod { get; set; }
 }
 
 public class CheckoutSelectedRequest
 {
     public List<Guid> CartItemIds { get; set; } = new();
-    public PaymentMethod PaymentMethod { get; set; }
+    public int PaymentMethod { get; set; }
 }
 
 public class ApplyCouponRequest

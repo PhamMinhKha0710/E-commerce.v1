@@ -1,40 +1,36 @@
 using E_commerce.v1.Application.DTOs.Auth;
 using E_commerce.v1.Application.Interfaces;
-using E_commerce.v1.Domain.Entities;
 using MediatR;
-using System.Security.Claims;
 
 namespace E_commerce.v1.Application.Features.Auth.Commands.RefreshToken;
 
 public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, AuthResponseDto>
 {
-    private readonly IGenericRepository<User> _userRepository;
     private readonly IJwtProvider _jwtProvider;
-    private readonly IAppDbContext _dbContext;
+    private readonly IUserRepository _userRepository;
 
-    public RefreshTokenCommandHandler(IGenericRepository<User> userRepository, IJwtProvider jwtProvider, IAppDbContext dbContext)
+    public RefreshTokenCommandHandler(IJwtProvider jwtProvider, IUserRepository userRepository)
     {
-        _userRepository = userRepository;
         _jwtProvider = jwtProvider;
-        _dbContext = dbContext;
+        _userRepository = userRepository;
     }
 
     public async Task<AuthResponseDto> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
         var principal = _jwtProvider.GetPrincipalFromExpiredToken(request.AccessToken);
         if (principal == null)
-            throw new Exception("Invalid access token or refresh token");
+            throw new UnauthorizedAccessException("Invalid access token or refresh token");
 
-        var userIdString = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userIdString = principal.FindFirst("sub")?.Value;
         if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out Guid userId))
-            throw new Exception("Invalid token claims");
+            throw new UnauthorizedAccessException("Invalid token claims");
 
         // We need UserRoles as well when generating the new token
-        var user = await _userRepository.FirstOrDefaultAsync(u => u.Id == userId, "UserRoles.Role");
+        var user = await _userRepository.GetByIdWithRolesAsync(userId, cancellationToken);
 
         if (user == null || user.RefreshToken != request.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
         {
-            throw new Exception("Invalid access token or refresh token");
+            throw new UnauthorizedAccessException("Invalid access token or refresh token");
         }
 
         var roles = user.UserRoles.Select(ur => ur.Role.Name).ToList();
@@ -43,9 +39,8 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
 
         user.RefreshToken = newRefreshToken;
         user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-        
-        await _userRepository.UpdateAsync(user);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        await _userRepository.SaveChangesAsync(cancellationToken);
 
         return new AuthResponseDto(user.Id, $"{user.FirstName} {user.LastName}".Trim(), user.Email, newAccessToken, newRefreshToken);
     }
