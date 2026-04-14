@@ -7,3 +7,10 @@ public enum OrderStatus
     Confirmed = 1,
     Cancelled = 2
 }
+
+public enum PaymentMethod
+{
+    Cod = 0,
+    BankTransfer = 1,
+    EWallet = 2
+}

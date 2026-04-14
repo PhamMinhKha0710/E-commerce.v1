@@ -1,27 +1,31 @@
 using System.Data;
+using E_commerce.v1.Application.Features.Order.Commands.Checkout;
 using E_commerce.v1.Application.Interfaces;
 using E_commerce.v1.Domain.Entities;
 using E_commerce.v1.Domain.Exceptions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace E_commerce.v1.Application.Features.Order.Commands.Checkout;
+namespace E_commerce.v1.Application.Features.Order.Commands.CheckoutSelected;
 
-public class CheckoutCommandHandler : IRequestHandler<CheckoutCommand, CheckoutResponse>
+public class CheckoutSelectedCommandHandler : IRequestHandler<CheckoutSelectedCommand, CheckoutResponse>
 {
     private readonly IAppDbContext _context;
 
-    public CheckoutCommandHandler(IAppDbContext context)
+    public CheckoutSelectedCommandHandler(IAppDbContext context)
     {
         _context = context;
     }
 
-    public async Task<CheckoutResponse> Handle(CheckoutCommand request, CancellationToken cancellationToken)
+    public async Task<CheckoutResponse> Handle(CheckoutSelectedCommand request, CancellationToken cancellationToken)
     {
         if (_context is not DbContext dbContext)
             throw new InvalidOperationException("IAppDbContext must be backed by DbContext for transaction support.");
 
-        // Serializable: tránh đọc Stock cũ khi hai checkout cùng lúc; entity load bằng LINQ để SaveChanges ghi Stock đúng.
+        var selectedIds = request.CartItemIds
+            .Distinct()
+            .ToHashSet();
+
         await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
 
         var cart = await _context.Carts
@@ -31,12 +35,16 @@ public class CheckoutCommandHandler : IRequestHandler<CheckoutCommand, CheckoutR
         if (cart == null || cart.CartItems.Count == 0)
             throw new BadRequestException("Giỏ hàng trống.");
 
-        var sortedItems = cart.CartItems
+        var selectedItems = cart.CartItems
+            .Where(ci => selectedIds.Contains(ci.Id))
             .OrderBy(ci => ci.ProductId)
             .ToList();
 
+        if (selectedItems.Count != selectedIds.Count)
+            throw new BadRequestException("Một số sản phẩm được chọn không tồn tại trong giỏ hàng.");
+
         var lockedProducts = new Dictionary<Guid, Product>();
-        foreach (var item in sortedItems)
+        foreach (var item in selectedItems)
         {
             var product = await _context.Products
                 .FirstOrDefaultAsync(p => p.Id == item.ProductId, cancellationToken);
@@ -51,7 +59,6 @@ public class CheckoutCommandHandler : IRequestHandler<CheckoutCommand, CheckoutR
                 throw new BadRequestException($"Sản phẩm '{product.Name}' không đủ tồn kho.");
 
             product.Stock -= item.Quantity;
-
             lockedProducts[item.ProductId] = product;
         }
 
@@ -63,7 +70,7 @@ public class CheckoutCommandHandler : IRequestHandler<CheckoutCommand, CheckoutR
             PaymentMethod = request.PaymentMethod
         };
 
-        foreach (var item in sortedItems)
+        foreach (var item in selectedItems)
         {
             var product = lockedProducts[item.ProductId];
             var unitAfterDiscount = product.Price - product.Discount;
@@ -86,7 +93,7 @@ public class CheckoutCommandHandler : IRequestHandler<CheckoutCommand, CheckoutR
         order.GrandTotal = order.Items.Sum(i => i.LineTotal);
 
         _context.Orders.Add(order);
-        _context.Carts.Remove(cart);
+        _context.CartItems.RemoveRange(selectedItems);
 
         await _context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);

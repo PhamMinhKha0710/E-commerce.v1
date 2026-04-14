@@ -15,6 +15,7 @@ public class Order : BaseEntity
     public decimal GrandTotal { get; set; }
 
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
+    public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.Cod;
 
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
 }
