@@ -1,7 +1,10 @@
 using E_commerce.v1.Application.DTOs.Cart;
 using E_commerce.v1.Application.Features.Cart.Commands;
 using E_commerce.v1.Application.Features.Cart.Queries;
+using E_commerce.v1.Application.Features.Coupons.Commands.ApplyCouponToCart;
 using E_commerce.v1.Application.Features.Order.Commands.Checkout;
+using E_commerce.v1.Application.Features.Order.Commands.CheckoutSelected;
+using E_commerce.v1.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -106,11 +109,28 @@ public class CartController : ControllerBase
 
     /// Checkout giỏ hàng hiện tại thành đơn hàng.
     [HttpPost("checkout")]
-    public async Task<ActionResult<CheckoutResponse>> Checkout()
+    public async Task<ActionResult<CheckoutResponse>> Checkout([FromBody] CheckoutRequest request)
     {
         var userId = GetUserIdFromToken();
-        var result = await _mediator.Send(new CheckoutCommand(userId));
+        var result = await _mediator.Send(new CheckoutCommand(userId, request.PaymentMethod));
         return CreatedAtAction(nameof(Checkout), new { id = result.OrderId }, result);
+    }
+
+    [HttpPost("apply-coupon")]
+    public async Task<ActionResult<ApplyCouponToCartResponse>> ApplyCoupon([FromBody] ApplyCouponRequest request)
+    {
+        var userId = GetUserIdFromToken();
+        var result = await _mediator.Send(new ApplyCouponToCartCommand(userId, request.CouponCode));
+        return Ok(result);
+    }
+
+    /// Checkout các item được chọn trong giỏ hàng thành 1 đơn hàng.
+    [HttpPost("checkout-selected")]
+    public async Task<ActionResult<CheckoutResponse>> CheckoutSelected([FromBody] CheckoutSelectedRequest request)
+    {
+        var userId = GetUserIdFromToken();
+        var result = await _mediator.Send(new CheckoutSelectedCommand(userId, request.CartItemIds, request.PaymentMethod));
+        return CreatedAtAction(nameof(CheckoutSelected), new { id = result.OrderId }, result);
     }
 
 
@@ -135,4 +155,20 @@ public class AddToCartCommandRequest
 public class UpdateCartItemRequest
 {
     public int Quantity { get; set; }
+}
+
+public class CheckoutRequest
+{
+    public PaymentMethod PaymentMethod { get; set; }
+}
+
+public class CheckoutSelectedRequest
+{
+    public List<Guid> CartItemIds { get; set; } = new();
+    public PaymentMethod PaymentMethod { get; set; }
+}
+
+public class ApplyCouponRequest
+{
+    public string CouponCode { get; set; } = string.Empty;
 }

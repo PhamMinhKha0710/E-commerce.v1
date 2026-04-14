@@ -34,7 +34,9 @@ public class GetCartQueryHandler : IRequestHandler<GetCartQuery, CartDto>
         Id = Guid.Empty,
         UserId = userId,
         CartItems = new List<CartItemDto>(),
-        TotalAmount = 0
+        TotalAmount = 0,
+        CouponDiscount = 0,
+        FinalAmount = 0
     };
 
     private static CartDto MapCart(E_commerce.v1.Domain.Entities.Cart cart)
@@ -59,7 +61,10 @@ public class GetCartQueryHandler : IRequestHandler<GetCartQuery, CartDto>
             Id = cart.Id,
             UserId = cart.UserId,
             CartItems = items,
-            TotalAmount = items.Sum(i => i.TotalPrice)
+            TotalAmount = items.Sum(i => i.TotalPrice),
+            AppliedCouponCode = cart.AppliedCouponCode,
+            CouponDiscount = cart.CouponDiscountPreview,
+            FinalAmount = Math.Max(0, items.Sum(i => i.TotalPrice) - cart.CouponDiscountPreview)
         };
     }
 }
