@@ -5,28 +5,24 @@ using E_commerce.v1.Domain.Entities;
 using E_commerce.v1.Domain.Exceptions;
 using Mapster;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace E_commerce.v1.Application.Features.Products.Commands.CreateProduct;
 
 public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand, Guid>
 {
-    private readonly IGenericRepository<Product> _productRepo;
-    private readonly IGenericRepository<Category> _categoryRepo;
     private readonly IAppDbContext _dbContext;
 
-    public CreateProductCommandHandler(
-        IGenericRepository<Product> productRepo,
-        IGenericRepository<Category> categoryRepo,
-        IAppDbContext dbContext)
+    public CreateProductCommandHandler(IAppDbContext dbContext)
     {
-        _productRepo = productRepo;
-        _categoryRepo = categoryRepo;
         _dbContext = dbContext;
     }
 
     public async Task<Guid> Handle(CreateProductCommand request, CancellationToken cancellationToken)
     {
-        var category = await _categoryRepo.GetByIdAsync(request.CategoryId);
+        var category = await _dbContext.Categories
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == request.CategoryId, cancellationToken);
         if (category == null)
             throw new NotFoundException("Danh mục không tồn tại.");
 
@@ -40,7 +36,7 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
         if (string.IsNullOrWhiteSpace(product.Slug))
             product.Slug = Slugify(request.Name) + "-" + product.Id.ToString("N", CultureInfo.InvariantCulture)[..8];
 
-        await _productRepo.AddAsync(product);
+        await _dbContext.Products.AddAsync(product, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return product.Id;

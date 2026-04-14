@@ -2,32 +2,28 @@ using E_commerce.v1.Application.Interfaces;
 using E_commerce.v1.Domain.Entities;
 using E_commerce.v1.Domain.Exceptions;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace E_commerce.v1.Application.Features.Products.Commands.UpdateProduct;
 
 public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand, bool>
 {
-    private readonly IGenericRepository<Product> _productRepo;
-    private readonly IGenericRepository<Category> _categoryRepo;
     private readonly IAppDbContext _dbContext;
 
-    public UpdateProductCommandHandler(
-        IGenericRepository<Product> productRepo,
-        IGenericRepository<Category> categoryRepo,
-        IAppDbContext dbContext)
+    public UpdateProductCommandHandler(IAppDbContext dbContext)
     {
-        _productRepo = productRepo;
-        _categoryRepo = categoryRepo;
         _dbContext = dbContext;
     }
 
     public async Task<bool> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
     {
-        var product = await _productRepo.GetByIdAsync(request.Id);
+        var product = await _dbContext.Products.FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken);
         if (product == null)
             throw new NotFoundException("Sản phẩm không tồn tại.");
 
-        var category = await _categoryRepo.GetByIdAsync(request.CategoryId);
+        var category = await _dbContext.Categories
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == request.CategoryId, cancellationToken);
         if (category == null)
             throw new NotFoundException("Danh mục không tồn tại.");
 
@@ -60,7 +56,6 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand,
             product.DocumentIds = request.DocumentIds.ToList();
         product.StoreId = request.StoreId;
 
-        await _productRepo.UpdateAsync(product);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return true;
