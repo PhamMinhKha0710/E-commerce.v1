@@ -20,6 +20,11 @@ public interface IAppDbContext
     DbSet<E_commerce.v1.Domain.Entities.Review> Reviews { get; }
     DbSet<E_commerce.v1.Domain.Entities.Coupon> Coupons { get; }
     DbSet<E_commerce.v1.Domain.Entities.CouponRedemption> CouponRedemptions { get; }
+    DbSet<E_commerce.v1.Domain.Entities.PromotionRule> PromotionRules { get; }
+    DbSet<E_commerce.v1.Domain.Entities.PromotionRuleProduct> PromotionRuleProducts { get; }
+    DbSet<E_commerce.v1.Domain.Entities.PromotionRuleCategory> PromotionRuleCategories { get; }
+    DbSet<E_commerce.v1.Domain.Entities.PromotionBuyXGetYAction> PromotionBuyXGetYActions { get; }
+    DbSet<E_commerce.v1.Domain.Entities.PromotionPercentageAction> PromotionPercentageActions { get; }
 
 
     void ClearChangeTracker();
