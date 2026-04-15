@@ -24,6 +24,11 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<Coupon> Coupons => Set<Coupon>();
     public DbSet<CouponRedemption> CouponRedemptions => Set<CouponRedemption>();
+    public DbSet<PromotionRule> PromotionRules => Set<PromotionRule>();
+    public DbSet<PromotionRuleProduct> PromotionRuleProducts => Set<PromotionRuleProduct>();
+    public DbSet<PromotionRuleCategory> PromotionRuleCategories => Set<PromotionRuleCategory>();
+    public DbSet<PromotionBuyXGetYAction> PromotionBuyXGetYActions => Set<PromotionBuyXGetYAction>();
+    public DbSet<PromotionPercentageAction> PromotionPercentageActions => Set<PromotionPercentageAction>();
 
     public AppDbContext(DbContextOptions<AppDbContext> options, ICurrentUserService currentUserService) : base(options)
     {
