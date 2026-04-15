@@ -15,6 +15,12 @@ public class CartConfiguration : IEntityTypeConfiguration<Cart>
         builder.Property(c => c.CouponDiscountPreview)
             .HasColumnType("decimal(18,2)");
 
+        builder.Property(c => c.PromotionDiscountPreview)
+            .HasColumnType("decimal(18,2)");
+
+        builder.Property(c => c.PromotionSummary)
+            .HasMaxLength(1024);
+
         // add relationship between Cart and User
         builder.HasOne(c => c.User)
                .WithOne()
@@ -24,6 +30,11 @@ public class CartConfiguration : IEntityTypeConfiguration<Cart>
         builder.HasOne(c => c.AppliedCoupon)
             .WithMany()
             .HasForeignKey(c => c.AppliedCouponId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasOne(c => c.AppliedPromotionRule)
+            .WithMany()
+            .HasForeignKey(c => c.AppliedPromotionRuleId)
             .OnDelete(DeleteBehavior.SetNull);
     }
 }

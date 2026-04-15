@@ -86,22 +86,39 @@ public class CheckoutRepository : ICheckoutRepository
         }
 
         order.Subtotal = order.Items.Sum(i => i.LineTotal);
+
+        // Promotion rules: apply best discount BEFORE coupon
+        var promoItems = order.Items
+            .Select(i =>
+            {
+                var categoryId = lockedProducts[i.ProductId].CategoryId;
+                var unitAfterDiscount = Math.Max(0, i.UnitPrice - i.Discount);
+                return new PromotionCartItem(i.ProductId, categoryId, unitAfterDiscount, i.Quantity);
+            })
+            .ToList();
+
+        var bestPromo = await PromotionEngine.CalculateBestAsync(_context, promoItems, now, cancellationToken);
+        order.PromotionRuleId = bestPromo?.RuleId;
+        order.PromotionDiscount = bestPromo?.DiscountAmount ?? 0m;
+        order.PromotionSummary = bestPromo?.Summary;
+
+        var amountAfterPromotion = Math.Max(0, order.Subtotal - order.PromotionDiscount);
         if (appliedCouponId.HasValue)
         {
             var coupon = await _context.Coupons.FirstOrDefaultAsync(c => c.Id == appliedCouponId.Value, cancellationToken);
             if (coupon == null) throw new BadRequestException("Mã giảm giá không còn tồn tại.");
-            order.CouponDiscount = CouponCalculator.ValidateAndCalculateDiscount(coupon, order.Subtotal, now);
+            order.CouponDiscount = CouponCalculator.ValidateAndCalculateDiscount(coupon, amountAfterPromotion, now);
             order.CouponCode = coupon.Code;
             coupon.UsedCount += 1;
             usedCouponId = coupon.Id;
         }
 
-        var amountAfterCoupon = order.Subtotal - order.CouponDiscount;
+        var amountAfterCoupon = amountAfterPromotion - order.CouponDiscount;
         var rank = await _context.Users.Where(u => u.Id == userId).Select(u => u.LoyaltyRank).FirstOrDefaultAsync(cancellationToken);
         order.RankAtCheckout = rank;
         var rankDiscountPercent = LoyaltyPolicy.GetRankDiscountPercent(rank);
         order.RankDiscount = decimal.Round(amountAfterCoupon * rankDiscountPercent, 2, MidpointRounding.AwayFromZero);
-        order.DiscountTotal = order.CouponDiscount + order.RankDiscount;
+        order.DiscountTotal = order.PromotionDiscount + order.CouponDiscount + order.RankDiscount;
         order.GrandTotal = Math.Max(0, order.Subtotal - order.DiscountTotal);
 
         if (usedCouponId.HasValue)

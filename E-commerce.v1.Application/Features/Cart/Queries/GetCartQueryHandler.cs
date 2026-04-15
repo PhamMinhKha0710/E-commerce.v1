@@ -1,4 +1,5 @@
 using E_commerce.v1.Application.DTOs.Cart;
+using E_commerce.v1.Application.Common;
 using E_commerce.v1.Application.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -25,7 +26,7 @@ public class GetCartQueryHandler : IRequestHandler<GetCartQuery, CartDto>
         if (cart == null)
             return EmptyCart(request.UserId);
 
-        return MapCart(cart);
+        return await MapCartAsync(_context, cart, cancellationToken);
     }
 
     /// <summary>Chưa có bản ghi Cart trong DB — trả về giỏ logic rỗng (Id = Empty để phân biệt).</summary>
@@ -35,11 +36,15 @@ public class GetCartQueryHandler : IRequestHandler<GetCartQuery, CartDto>
         UserId = userId,
         CartItems = new List<CartItemDto>(),
         TotalAmount = 0,
+        PromotionDiscount = 0,
         CouponDiscount = 0,
         FinalAmount = 0
     };
 
-    private static CartDto MapCart(E_commerce.v1.Domain.Entities.Cart cart)
+    private static async Task<CartDto> MapCartAsync(
+        IAppDbContext context,
+        E_commerce.v1.Domain.Entities.Cart cart,
+        CancellationToken cancellationToken)
     {
         var items = cart.CartItems.Select(ci =>
         {
@@ -56,15 +61,33 @@ public class GetCartQueryHandler : IRequestHandler<GetCartQuery, CartDto>
             };
         }).ToList();
 
+        var promoItems = cart.CartItems
+            .Where(ci => ci.Product != null)
+            .Select(ci => new PromotionCartItem(
+                ci.ProductId,
+                ci.Product!.CategoryId,
+                ci.Product.Price,
+                ci.Quantity))
+            .ToList();
+
+        var now = DateTime.UtcNow;
+        var bestPromo = await PromotionEngine.CalculateBestAsync(context, promoItems, now, cancellationToken);
+        var promotionDiscount = bestPromo?.DiscountAmount ?? 0m;
+        var subtotalAfterPromotion = Math.Max(0, items.Sum(i => i.TotalPrice) - promotionDiscount);
+        var couponDiscount = Math.Min(cart.CouponDiscountPreview, subtotalAfterPromotion);
+
         return new CartDto
         {
             Id = cart.Id,
             UserId = cart.UserId,
             CartItems = items,
             TotalAmount = items.Sum(i => i.TotalPrice),
+            AppliedPromotionRuleId = bestPromo?.RuleId,
+            PromotionSummary = bestPromo?.Summary,
+            PromotionDiscount = promotionDiscount,
             AppliedCouponCode = cart.AppliedCouponCode,
-            CouponDiscount = cart.CouponDiscountPreview,
-            FinalAmount = Math.Max(0, items.Sum(i => i.TotalPrice) - cart.CouponDiscountPreview)
+            CouponDiscount = couponDiscount,
+            FinalAmount = Math.Max(0, subtotalAfterPromotion - couponDiscount)
         };
     }
 }

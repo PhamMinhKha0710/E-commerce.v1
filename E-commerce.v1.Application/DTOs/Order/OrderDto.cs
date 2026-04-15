@@ -11,6 +11,9 @@ public class OrderDto
     public decimal Subtotal { get; set; }
     public decimal DiscountTotal { get; set; }
     public decimal GrandTotal { get; set; }
+    public Guid? PromotionRuleId { get; set; }
+    public decimal PromotionDiscount { get; set; }
+    public string? PromotionSummary { get; set; }
     public decimal CouponDiscount { get; set; }
     public decimal RankDiscount { get; set; }
     public string? CouponCode { get; set; }
