@@ -11,6 +11,8 @@ public interface IAppDbContext
     
     DbSet<E_commerce.v1.Domain.Entities.Category> Categories { get; }
     DbSet<E_commerce.v1.Domain.Entities.Product> Products { get; }
+    DbSet<E_commerce.v1.Domain.Entities.ProductVariant> ProductVariants { get; }
+    DbSet<E_commerce.v1.Domain.Entities.ProductVariantOption> ProductVariantOptions { get; }
     DbSet<E_commerce.v1.Domain.Entities.Cart> Carts { get; }
     DbSet<E_commerce.v1.Domain.Entities.CartItem> CartItems { get; }
     DbSet<E_commerce.v1.Domain.Entities.Order> Orders { get; }
