@@ -1,5 +1,8 @@
 using System.Reflection;
 using E_commerce.v1.Application.Behaviors;
+using E_commerce.v1.Application.Features.Coupons.Services;
+using E_commerce.v1.Application.Features.Products.Services;
+using E_commerce.v1.Application.Features.Promotions.Services;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -17,6 +20,11 @@ public static class DependencyInjection
             cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
             cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
         });
+        
+        // Register Domain/Application Services
+        services.AddScoped<IProductSlugService, ProductSlugService>();
+        services.AddScoped<ICouponCalculationService, CouponCalculationService>();
+        services.AddScoped<IPromotionRuleBuilderService, PromotionRuleBuilderService>();
         
         return services;
     }

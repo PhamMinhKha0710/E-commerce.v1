@@ -27,6 +27,8 @@ public static class DependencyInjection
         services.AddScoped<ICartRepository, CartRepository>();
         services.AddScoped<ICheckoutRepository, CheckoutRepository>();
         services.AddScoped<IReviewRepository, ReviewRepository>();
+        services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<IPromotionRuleRepository, PromotionRuleRepository>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         // Auth

@@ -101,4 +101,34 @@ public class CartRepository : ICartRepository
             else if (number is long ln) yield return (int)ln;
         }
     }
+
+    public async Task<Cart?> GetCartWithItemsAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        return await _context.Carts
+            .Include(c => c.CartItems)
+            .ThenInclude(i => i.Product)
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+    }
+
+    public async Task<Coupon?> GetCouponByCodeAsync(string code, CancellationToken cancellationToken)
+    {
+        return await _context.Coupons
+            .FirstOrDefaultAsync(c => c.Code == code.ToUpperInvariant(), cancellationToken);
+    }
+
+    public async Task UpdateCartCouponAsync(Guid cartId, Guid couponId, string code, decimal discount, CancellationToken cancellationToken)
+    {
+        var cart = await _context.Carts.FirstOrDefaultAsync(c => c.Id == cartId, cancellationToken);
+        if (cart != null)
+        {
+            cart.AppliedCouponId = couponId;
+            cart.AppliedCouponCode = code;
+            cart.CouponDiscountPreview = discount;
+        }
+    }
+
+    public async Task SaveChangesAsync(CancellationToken cancellationToken)
+    {
+        await _context.SaveChangesAsync(cancellationToken);
+    }
 }
