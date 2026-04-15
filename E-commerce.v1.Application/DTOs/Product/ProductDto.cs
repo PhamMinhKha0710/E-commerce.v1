@@ -17,6 +17,10 @@ public class ProductDto
     public IList<string> DocumentIds { get; set; } = new List<string>();
 
     public string CategoryName { get; set; } = string.Empty;
+
+    public int VariantCount { get; set; }
+    public decimal? MinVariantPrice { get; set; }
+    public decimal? MaxVariantPrice { get; set; }
 }
 
 public class ProductDetailDto : ProductDto
@@ -31,4 +35,6 @@ public class ProductDetailDto : ProductDto
     public Guid CategoryId { get; set; }
     public int? StoreId { get; set; }
     public DateTime CreatedAt { get; set; }
+
+    public IList<ProductVariantDto> Variants { get; set; } = new List<ProductVariantDto>();
 }

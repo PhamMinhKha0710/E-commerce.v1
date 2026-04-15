@@ -17,7 +17,11 @@ public class GetProductsQueryHandler : IRequestHandler<GetProductsQuery, PagedRe
 
     public async Task<PagedResult<ProductDto>> Handle(GetProductsQuery request, CancellationToken cancellationToken)
     {
-        var query = _context.Products.AsNoTracking().Include(p => p.Category).AsQueryable();
+        var query = _context.Products
+            .AsNoTracking()
+            .Include(p => p.Category)
+            .Include(p => p.Variants)
+            .AsQueryable();
 
         if (request.CategoryId.HasValue)
             query = query.Where(p => p.CategoryId == request.CategoryId.Value);
@@ -70,7 +74,10 @@ public class GetProductsQueryHandler : IRequestHandler<GetProductsQuery, PagedRe
             ProductType = p.ProductType,
             Kind = p.Kind,
             DocumentIds = p.DocumentIds.ToList(),
-            CategoryName = p.Category.Name
+            CategoryName = p.Category.Name,
+            VariantCount = p.Variants.Count(v => v.IsActive),
+            MinVariantPrice = p.Variants.Where(v => v.IsActive).Select(v => (decimal?)v.Price).Min(),
+            MaxVariantPrice = p.Variants.Where(v => v.IsActive).Select(v => (decimal?)v.Price).Max()
         }).ToList();
 
         return new PagedResult<ProductDto>

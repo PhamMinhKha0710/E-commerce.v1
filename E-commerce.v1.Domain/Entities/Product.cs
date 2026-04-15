@@ -37,5 +37,7 @@ public class Product : BaseEntity
     public virtual Category Category { get; set; } = null!;
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
 
+    public ICollection<ProductVariant> Variants { get; set; } = new List<ProductVariant>();
+
     public bool IsDeleted { get; set; } = false;
 }
