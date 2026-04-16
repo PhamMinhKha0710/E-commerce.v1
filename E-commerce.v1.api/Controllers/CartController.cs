@@ -4,6 +4,7 @@ using E_commerce.v1.Application.Features.Cart.Queries;
 using E_commerce.v1.Application.Features.Coupons.Commands.ApplyCouponToCart;
 using E_commerce.v1.Application.Features.Order.Commands.Checkout;
 using E_commerce.v1.Application.Features.Order.Commands.CheckoutSelected;
+using E_commerce.v1.Application.DTOs.Shipping;
 using E_commerce.v1.api.Extensions;
 using E_commerce.v1.Domain.Enums;
 using MediatR;
@@ -114,7 +115,7 @@ public class CartController : ControllerBase
             return BadRequest(new { Message = "PaymentMethod không hợp lệ." });
 
         var userId = User.GetRequiredUserId();
-        var result = await _mediator.Send(new CheckoutCommand(userId, (PaymentMethod)request.PaymentMethod));
+        var result = await _mediator.Send(new CheckoutCommand(userId, (PaymentMethod)request.PaymentMethod, request.Shipping));
         return CreatedAtAction(nameof(Checkout), new { id = result.OrderId }, result);
     }
 
@@ -134,7 +135,7 @@ public class CartController : ControllerBase
             return BadRequest(new { Message = "PaymentMethod không hợp lệ." });
 
         var userId = User.GetRequiredUserId();
-        var result = await _mediator.Send(new CheckoutSelectedCommand(userId, request.CartItemIds, (PaymentMethod)request.PaymentMethod));
+        var result = await _mediator.Send(new CheckoutSelectedCommand(userId, request.CartItemIds, (PaymentMethod)request.PaymentMethod, request.Shipping));
         return CreatedAtAction(nameof(CheckoutSelected), new { id = result.OrderId }, result);
     }
 }
@@ -153,12 +154,14 @@ public class UpdateCartItemRequest
 public class CheckoutRequest
 {
     public int PaymentMethod { get; set; }
+    public CheckoutShippingInfo? Shipping { get; set; }
 }
 
 public class CheckoutSelectedRequest
 {
     public List<Guid> CartItemIds { get; set; } = new();
     public int PaymentMethod { get; set; }
+    public CheckoutShippingInfo? Shipping { get; set; }
 }
 
 public class ApplyCouponRequest
