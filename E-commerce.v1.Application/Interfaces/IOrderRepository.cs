@@ -1,0 +1,16 @@
+using E_commerce.v1.Domain.Entities;
+
+namespace E_commerce.v1.Application.Interfaces;
+
+public interface IOrderRepository
+{
+    Task<Order?> GetOrderByIdAsync(Guid orderId, CancellationToken cancellationToken);
+
+    Task<(List<Order> Items, int Total)> GetMyOrdersAsync(
+        Guid userId,
+        int skip,
+        int take,
+        CancellationToken cancellationToken);
+
+    Task<Order?> UpdateOrderStatusAsync(Guid orderId, int newStatus, CancellationToken cancellationToken);
+}
