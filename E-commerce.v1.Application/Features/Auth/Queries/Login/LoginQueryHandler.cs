@@ -10,12 +10,14 @@ public class LoginQueryHandler : IRequestHandler<LoginQuery, AuthResponseDto>
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtProvider _jwtProvider;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public LoginQueryHandler(IUserRepository userRepository, IPasswordHasher passwordHasher, IJwtProvider jwtProvider)
+    public LoginQueryHandler(IUserRepository userRepository, IPasswordHasher passwordHasher, IJwtProvider jwtProvider, IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
         _jwtProvider = jwtProvider;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<AuthResponseDto> Handle(LoginQuery request, CancellationToken cancellationToken)
@@ -38,7 +40,7 @@ public class LoginQueryHandler : IRequestHandler<LoginQuery, AuthResponseDto>
 
         user.RefreshToken = refreshToken;
         user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-        await _userRepository.SaveChangesAsync(cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new AuthResponseDto(user.Id, $"{user.FirstName} {user.LastName}".Trim(), user.Email, token, refreshToken);
     }

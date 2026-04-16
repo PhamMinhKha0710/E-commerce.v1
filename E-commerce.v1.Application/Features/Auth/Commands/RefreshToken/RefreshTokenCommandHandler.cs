@@ -8,11 +8,13 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
 {
     private readonly IJwtProvider _jwtProvider;
     private readonly IUserRepository _userRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public RefreshTokenCommandHandler(IJwtProvider jwtProvider, IUserRepository userRepository)
+    public RefreshTokenCommandHandler(IJwtProvider jwtProvider, IUserRepository userRepository, IUnitOfWork unitOfWork)
     {
         _jwtProvider = jwtProvider;
         _userRepository = userRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<AuthResponseDto> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
@@ -40,7 +42,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
         user.RefreshToken = newRefreshToken;
         user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
 
-        await _userRepository.SaveChangesAsync(cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new AuthResponseDto(user.Id, $"{user.FirstName} {user.LastName}".Trim(), user.Email, newAccessToken, newRefreshToken);
     }
