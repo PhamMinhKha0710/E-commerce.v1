@@ -2,23 +2,24 @@ using E_commerce.v1.Application.Interfaces;
 using E_commerce.v1.Domain.Entities;
 using E_commerce.v1.Domain.Exceptions;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace E_commerce.v1.Application.Features.Coupons.Commands.CreateCoupon;
 
 public class CreateCouponCommandHandler : IRequestHandler<CreateCouponCommand, Guid>
 {
-    private readonly IAppDbContext _context;
+    private readonly ICouponRepository _couponRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public CreateCouponCommandHandler(IAppDbContext context)
+    public CreateCouponCommandHandler(ICouponRepository couponRepository, IUnitOfWork unitOfWork)
     {
-        _context = context;
+        _couponRepository = couponRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Guid> Handle(CreateCouponCommand request, CancellationToken cancellationToken)
     {
         var normalizedCode = request.Code.Trim().ToUpperInvariant();
-        var exists = await _context.Coupons.AnyAsync(c => c.Code == normalizedCode, cancellationToken);
+        var exists = await _couponRepository.ExistsByCodeAsync(normalizedCode, cancellationToken);
         if (exists)
             throw new BadRequestException("Mã giảm giá đã tồn tại.");
 
@@ -35,8 +36,8 @@ public class CreateCouponCommandHandler : IRequestHandler<CreateCouponCommand, G
             IsActive = true
         };
 
-        _context.Coupons.Add(coupon);
-        await _context.SaveChangesAsync(cancellationToken);
+        await _couponRepository.AddAsync(coupon, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
         return coupon.Id;
     }
 }

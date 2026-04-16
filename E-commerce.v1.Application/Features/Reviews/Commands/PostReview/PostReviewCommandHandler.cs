@@ -5,16 +5,16 @@ namespace E_commerce.v1.Application.Features.Reviews.Commands.PostReview;
 
 public class PostReviewCommandHandler : IRequestHandler<PostReviewCommand, Guid>
 {
-    private readonly IReviewRepository _reviewRepository;
+    private readonly IReviewService _reviewService;
 
-    public PostReviewCommandHandler(IReviewRepository reviewRepository)
+    public PostReviewCommandHandler(IReviewService reviewService)
     {
-        _reviewRepository = reviewRepository;
+        _reviewService = reviewService;
     }
 
     public async Task<Guid> Handle(PostReviewCommand request, CancellationToken cancellationToken)
     {
-        return await _reviewRepository.UpsertReviewAsync(
+        return await _reviewService.UpsertReviewAsync(
             request.UserId,
             request.ProductId,
             request.Rating,
