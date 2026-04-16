@@ -6,23 +6,25 @@ public interface ICartRepository
 {
     Task AddToCartAsync(Guid userId, Guid productId, int quantity, CancellationToken cancellationToken);
 
-    /// <summary>
-    /// Get cart with items and product details
-    /// </summary>
     Task<Cart?> GetCartWithItemsAsync(Guid userId, CancellationToken cancellationToken);
 
-    /// <summary>
-    /// Get coupon by code
-    /// </summary>
+    Task<Cart?> GetCartByUserIdAsync(Guid userId, CancellationToken cancellationToken);
+
+    Task<CartItem?> GetCartItemWithDetailsAsync(Guid cartItemId, CancellationToken cancellationToken);
+
     Task<Coupon?> GetCouponByCodeAsync(string code, CancellationToken cancellationToken);
 
-    /// <summary>
-    /// Update cart with applied coupon
-    /// </summary>
     Task UpdateCartCouponAsync(Guid cartId, Guid couponId, string code, decimal discount, CancellationToken cancellationToken);
 
-    /// <summary>
-    /// Save changes to database
-    /// </summary>
-    Task SaveChangesAsync(CancellationToken cancellationToken);
+    Task RemoveCartItemAsync(Guid cartItemId, CancellationToken cancellationToken);
+
+    Task<CartItem?> UpdateCartItemQuantityAsync(Guid cartItemId, int quantity, CancellationToken cancellationToken);
+
+    Task ClearCartAsync(Guid userId, CancellationToken cancellationToken);
+
+    Task<Cart?> SyncCartItemsAsync(Guid userId, List<CartItem> items, CancellationToken cancellationToken);
+
+    Task<Product?> GetProductByIdAsync(Guid productId, CancellationToken cancellationToken);
+
+    Task<bool> UserExistsAsync(Guid userId, CancellationToken cancellationToken);
 }

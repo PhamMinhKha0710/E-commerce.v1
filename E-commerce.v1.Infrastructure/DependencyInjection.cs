@@ -19,8 +19,6 @@ public static class DependencyInjection
                 b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
-        // Đảm bảo rằng mỗi khi Application yêu cầu Interface IAppDbContext, hệ thống sẽ trả về DbContext thật
-        services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         services.AddScoped<IUserRepository, UserRepository>();
@@ -28,7 +26,11 @@ public static class DependencyInjection
         services.AddScoped<ICheckoutRepository, CheckoutRepository>();
         services.AddScoped<IReviewRepository, ReviewRepository>();
         services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<IProductQueryRepository, ProductQueryRepository>();
         services.AddScoped<IPromotionRuleRepository, PromotionRuleRepository>();
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IVariantRepository, VariantRepository>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         // Auth
