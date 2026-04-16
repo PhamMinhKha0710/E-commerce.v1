@@ -10,20 +10,22 @@ public class CreatePromotionRuleCommandHandler : IRequestHandler<CreatePromotion
 {
     private readonly IPromotionRuleRepository _promotionRuleRepository;
     private readonly IPromotionRuleBuilderService _promotionRuleBuilderService;
+    private readonly IUnitOfWork _unitOfWork;
 
     public CreatePromotionRuleCommandHandler(
         IPromotionRuleRepository promotionRuleRepository,
-        IPromotionRuleBuilderService promotionRuleBuilderService)
+        IPromotionRuleBuilderService promotionRuleBuilderService,
+        IUnitOfWork unitOfWork)
     {
         _promotionRuleRepository = promotionRuleRepository;
         _promotionRuleBuilderService = promotionRuleBuilderService;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Guid> Handle(CreatePromotionRuleCommand request, CancellationToken cancellationToken)
     {
         var dto = request.Rule;
 
-        // Create promotion rule entity
         var rule = new PromotionRule
         {
             Id = Guid.NewGuid(),
@@ -35,13 +37,11 @@ public class CreatePromotionRuleCommandHandler : IRequestHandler<CreatePromotion
             IsActive = dto.IsActive
         };
 
-        // Apply scope and action
         await _promotionRuleBuilderService.ApplyScopeAsync(rule, dto.Scope, cancellationToken);
         _promotionRuleBuilderService.ApplyAction(rule, dto);
 
-        // Persist rule
         await _promotionRuleRepository.AddAsync(rule, cancellationToken);
-        await _promotionRuleRepository.SaveChangesAsync(cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return rule.Id;
     }
