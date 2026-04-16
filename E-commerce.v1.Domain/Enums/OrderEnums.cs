@@ -6,7 +6,9 @@ public enum OrderStatus
     Pending = 0,
     Confirmed = 1,
     Cancelled = 2,
-    Completed = 3
+    Completed = 3,
+    /// <summary>In transit with carrier (e.g. Ahamove).</summary>
+    Delivering = 4
 }
 
 public enum PaymentMethod
