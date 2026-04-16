@@ -2,32 +2,28 @@ using E_commerce.v1.Application.Interfaces;
 using E_commerce.v1.Domain.Entities;
 using E_commerce.v1.Domain.Exceptions;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace E_commerce.v1.Application.Features.Variants.Commands.UpdateVariant;
 
 public class UpdateVariantCommandHandler : IRequestHandler<UpdateVariantCommand>
 {
-    private readonly IAppDbContext _dbContext;
+    private readonly IVariantRepository _variantRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public UpdateVariantCommandHandler(IAppDbContext dbContext)
+    public UpdateVariantCommandHandler(IVariantRepository variantRepository, IUnitOfWork unitOfWork)
     {
-        _dbContext = dbContext;
+        _variantRepository = variantRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task Handle(UpdateVariantCommand request, CancellationToken cancellationToken)
     {
-        var variant = await _dbContext.ProductVariants
-            .Include(v => v.Options)
-            .FirstOrDefaultAsync(v => v.Id == request.Id, cancellationToken);
-
+        var variant = await _variantRepository.GetVariantByIdAsync(request.Id, cancellationToken);
         if (variant == null)
             throw new NotFoundException("Biến thể không tồn tại.");
 
         var normalizedSku = request.Sku.Trim();
-        var skuExists = await _dbContext.ProductVariants
-            .AsNoTracking()
-            .AnyAsync(v => v.Sku == normalizedSku && v.Id != request.Id, cancellationToken);
+        var skuExists = await _variantRepository.SkuExistsAsync(normalizedSku, excludeVariantId: request.Id, cancellationToken);
         if (skuExists)
             throw new BadRequestException("SKU đã tồn tại trong hệ thống.");
 
@@ -36,7 +32,6 @@ public class UpdateVariantCommandHandler : IRequestHandler<UpdateVariantCommand>
         variant.Inventory = request.Inventory;
         variant.IsActive = request.IsActive;
 
-        // Replace options (simple + deterministic)
         variant.Options.Clear();
         if (request.Options != null)
         {
@@ -56,7 +51,8 @@ public class UpdateVariantCommandHandler : IRequestHandler<UpdateVariantCommand>
             }
         }
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _variantRepository.UpdateVariantAsync(variant, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }
 
