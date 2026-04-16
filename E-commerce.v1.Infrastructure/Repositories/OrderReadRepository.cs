@@ -41,6 +41,8 @@ public class OrderReadRepository : IOrderReadRepository
                 CouponCode = o.CouponCode,
                 RankAtCheckout = o.RankAtCheckout,
                 CreatedAt = o.CreatedAt,
+                AhamoveOrderId = o.AhamoveOrderId,
+                AhamoveLastStatus = o.AhamoveLastStatus,
                 Items = o.Items.Select(i => new OrderItemDto
                 {
                     Id = i.Id,
@@ -78,6 +80,8 @@ public class OrderReadRepository : IOrderReadRepository
                 CouponCode = o.CouponCode,
                 RankAtCheckout = o.RankAtCheckout,
                 CreatedAt = o.CreatedAt,
+                AhamoveOrderId = o.AhamoveOrderId,
+                AhamoveLastStatus = o.AhamoveLastStatus,
                 Items = o.Items.Select(i => new OrderItemDto
                 {
                     Id = i.Id,
