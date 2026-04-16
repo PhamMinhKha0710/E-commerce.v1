@@ -1,6 +1,7 @@
 using E_commerce.v1.Application.Features.Reviews.Commands.PostReview;
 using E_commerce.v1.Application.Features.Reviews.Queries.GetProductReviews;
 using E_commerce.v1.Application.Interfaces;
+using E_commerce.v1.Application.Services;
 using E_commerce.v1.Domain.Entities;
 using E_commerce.v1.Domain.Enums;
 using E_commerce.v1.Domain.Exceptions;
@@ -22,7 +23,9 @@ public class ReviewHandlersTests
         await context.SaveChangesAsync();
 
         var reviewRepository = new ReviewRepository(context);
-        var handler = new PostReviewCommandHandler(reviewRepository);
+        var unitOfWork = new EfUnitOfWork(context);
+        var reviewService = new ReviewService(reviewRepository, unitOfWork);
+        var handler = new PostReviewCommandHandler(reviewService);
         var command = new PostReviewCommand
         {
             ProductId = product.Id,
@@ -40,7 +43,9 @@ public class ReviewHandlersTests
         await using var context = CreateContext();
         var seed = await SeedCompletedOrderWithProduct(context);
         var reviewRepository = new ReviewRepository(context);
-        var handler = new PostReviewCommandHandler(reviewRepository);
+        var unitOfWork = new EfUnitOfWork(context);
+        var reviewService = new ReviewService(reviewRepository, unitOfWork);
+        var handler = new PostReviewCommandHandler(reviewService);
 
         var firstReviewId = await handler.Handle(
             new PostReviewCommand
@@ -86,8 +91,8 @@ public class ReviewHandlersTests
             });
         await context.SaveChangesAsync();
 
-        var reviewRepository = new ReviewRepository(context);
-        var handler = new GetProductReviewsQueryHandler(reviewRepository);
+        var reviewReadRepository = new ReviewReadRepository(context);
+        var handler = new GetProductReviewsQueryHandler(reviewReadRepository);
         var result = await handler.Handle(
             new GetProductReviewsQuery(seed.ProductId, Page: 1, PageNumber: null, PageSize: 1),
             CancellationToken.None);

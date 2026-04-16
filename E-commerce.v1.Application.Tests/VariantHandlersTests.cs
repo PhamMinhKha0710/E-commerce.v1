@@ -7,6 +7,7 @@ using E_commerce.v1.Application.Interfaces;
 using E_commerce.v1.Domain.Entities;
 using E_commerce.v1.Domain.Exceptions;
 using E_commerce.v1.Infrastructure.Data;
+using E_commerce.v1.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace E_commerce.v1.Application.Tests;
@@ -19,7 +20,10 @@ public class VariantHandlersTests
         await using var context = CreateContext();
         var productId = await SeedProduct(context);
 
-        var handler = new CreateVariantCommandHandler(context);
+        var variantRepository = new VariantRepository(context);
+        var productRepository = new ProductQueryRepository(context);
+        var unitOfWork = new EfUnitOfWork(context);
+        var handler = new CreateVariantCommandHandler(variantRepository, productRepository, unitOfWork);
         var variantId = await handler.Handle(
             new CreateVariantCommand(
                 ProductId: productId,
@@ -65,7 +69,10 @@ public class VariantHandlersTests
         });
         await context.SaveChangesAsync();
 
-        var handler = new CreateVariantCommandHandler(context);
+        var variantRepository = new VariantRepository(context);
+        var productRepository = new ProductQueryRepository(context);
+        var unitOfWork = new EfUnitOfWork(context);
+        var handler = new CreateVariantCommandHandler(variantRepository, productRepository, unitOfWork);
         await Assert.ThrowsAsync<BadRequestException>(() => handler.Handle(
             new CreateVariantCommand(productId, "DUP-SKU", 99, 10, true, Options: null),
             CancellationToken.None));
@@ -93,7 +100,8 @@ public class VariantHandlersTests
         });
         await context.SaveChangesAsync();
 
-        var handler = new GetProductByIdQueryHandler(context);
+        var productRepository = new ProductReadRepository(context);
+        var handler = new GetProductByIdQueryHandler(productRepository);
         var result = await handler.Handle(new GetProductByIdQuery(productId), CancellationToken.None);
 
         Assert.NotNull(result);
@@ -122,10 +130,13 @@ public class VariantHandlersTests
         });
         await context.SaveChangesAsync();
 
-        var deleteHandler = new DeleteVariantCommandHandler(context);
+        var variantRepository = new VariantRepository(context);
+        var unitOfWork = new EfUnitOfWork(context);
+        var deleteHandler = new DeleteVariantCommandHandler(variantRepository, unitOfWork);
         await deleteHandler.Handle(new DeleteVariantCommand(variantId), CancellationToken.None);
 
-        var detailHandler = new GetProductByIdQueryHandler(context);
+        var productRepository = new ProductReadRepository(context);
+        var detailHandler = new GetProductByIdQueryHandler(productRepository);
         var result = await detailHandler.Handle(new GetProductByIdQuery(productId), CancellationToken.None);
 
         Assert.Empty(result.Variants);
@@ -153,7 +164,9 @@ public class VariantHandlersTests
         });
         await context.SaveChangesAsync();
 
-        var updateHandler = new UpdateVariantCommandHandler(context);
+        var variantRepository = new VariantRepository(context);
+        var unitOfWork = new EfUnitOfWork(context);
+        var updateHandler = new UpdateVariantCommandHandler(variantRepository, unitOfWork);
         await updateHandler.Handle(
             new UpdateVariantCommand(
                 Id: variantId,
