@@ -19,6 +19,7 @@ public class CheckoutSelectedCommandHandler : IRequestHandler<CheckoutSelectedCo
             request.UserId,
             request.CartItemIds,
             request.PaymentMethod,
+            request.Shipping,
             cancellationToken);
     }
 }

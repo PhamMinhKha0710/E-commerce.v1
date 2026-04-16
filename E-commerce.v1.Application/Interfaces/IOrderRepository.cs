@@ -6,6 +6,8 @@ public interface IOrderRepository
 {
     Task<Order?> GetOrderByIdAsync(Guid orderId, CancellationToken cancellationToken);
 
+    Task<Order?> GetOrderByAhamoveOrderIdAsync(string ahamoveOrderId, CancellationToken cancellationToken);
+
     Task<(List<Order> Items, int Total)> GetMyOrdersAsync(
         Guid userId,
         int skip,

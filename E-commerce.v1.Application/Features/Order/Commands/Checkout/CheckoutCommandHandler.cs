@@ -14,6 +14,6 @@ public class CheckoutCommandHandler : IRequestHandler<CheckoutCommand, CheckoutR
 
     public async Task<CheckoutResponse> Handle(CheckoutCommand request, CancellationToken cancellationToken)
     {
-        return await _checkoutService.CheckoutAsync(request.UserId, request.PaymentMethod, cancellationToken);
+        return await _checkoutService.CheckoutAsync(request.UserId, request.PaymentMethod, request.Shipping, cancellationToken);
     }
 }

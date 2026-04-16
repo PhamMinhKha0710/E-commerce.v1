@@ -19,6 +19,8 @@ public class OrderDto
     public string? CouponCode { get; set; }
     public LoyaltyRank RankAtCheckout { get; set; }
     public DateTime CreatedAt { get; set; }
+    public string? AhamoveOrderId { get; set; }
+    public string? AhamoveLastStatus { get; set; }
     public List<OrderItemDto> Items { get; set; } = new();
 }
 
