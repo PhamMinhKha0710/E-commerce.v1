@@ -6,16 +6,16 @@ namespace E_commerce.v1.Application.Features.Order.Commands.CheckoutSelected;
 
 public class CheckoutSelectedCommandHandler : IRequestHandler<CheckoutSelectedCommand, CheckoutResponse>
 {
-    private readonly ICheckoutRepository _checkoutRepository;
+    private readonly ICheckoutService _checkoutService;
 
-    public CheckoutSelectedCommandHandler(ICheckoutRepository checkoutRepository)
+    public CheckoutSelectedCommandHandler(ICheckoutService checkoutService)
     {
-        _checkoutRepository = checkoutRepository;
+        _checkoutService = checkoutService;
     }
 
     public async Task<CheckoutResponse> Handle(CheckoutSelectedCommand request, CancellationToken cancellationToken)
     {
-        return await _checkoutRepository.CheckoutSelectedAsync(
+        return await _checkoutService.CheckoutSelectedAsync(
             request.UserId,
             request.CartItemIds,
             request.PaymentMethod,
