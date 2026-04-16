@@ -1,28 +1,23 @@
 using E_commerce.v1.Application.Interfaces;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace E_commerce.v1.Application.Features.Cart.Commands;
 
 public class ClearCartCommandHandler : IRequestHandler<ClearCartCommand, Unit>
 {
-    private readonly IAppDbContext _context;
+    private readonly ICartRepository _cartRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public ClearCartCommandHandler(IAppDbContext context)
+    public ClearCartCommandHandler(ICartRepository cartRepository, IUnitOfWork unitOfWork)
     {
-        _context = context;
+        _cartRepository = cartRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Unit> Handle(ClearCartCommand request, CancellationToken cancellationToken)
     {
-        var cart = await _context.Carts
-            .FirstOrDefaultAsync(c => c.UserId == request.UserId, cancellationToken);
-
-        if (cart == null)
-            return Unit.Value;
-
-        _context.Carts.Remove(cart);
-        await _context.SaveChangesAsync(cancellationToken);
+        await _cartRepository.ClearCartAsync(request.UserId, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
         return Unit.Value;
     }
 }
