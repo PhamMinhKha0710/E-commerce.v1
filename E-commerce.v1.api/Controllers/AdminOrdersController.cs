@@ -1,4 +1,8 @@
+using E_commerce.v1.Application.DTOs.Common;
+using E_commerce.v1.Application.DTOs.Order;
 using E_commerce.v1.Application.Features.Order.Commands.UpdateOrderStatus;
+using E_commerce.v1.Application.Features.Order.Queries.Admin.GetAdminOrderById;
+using E_commerce.v1.Application.Features.Order.Queries.Admin.GetAdminOrders;
 using E_commerce.v1.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -18,18 +22,37 @@ public class AdminOrdersController : ControllerBase
         _mediator = mediator;
     }
 
+    /// <summary>Liệt kê đơn hàng cho admin (filter theo status, khoảng ngày, phân trang).</summary>
+    [HttpGet]
+    public async Task<ActionResult<PagedResult<OrderDto>>> List(
+        [FromQuery] OrderStatus? status = null,
+        [FromQuery] DateTime? fromDate = null,
+        [FromQuery] DateTime? toDate = null,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        var result = await _mediator.Send(
+            new GetAdminOrdersQuery(status, fromDate, toDate, pageNumber, pageSize));
+        return Ok(result);
+    }
+
+    /// <summary>Chi tiết đơn hàng cho admin (không giới hạn theo user).</summary>
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<OrderDto>> GetById(Guid id)
+    {
+        var result = await _mediator.Send(new GetAdminOrderByIdQuery(id));
+        return Ok(result);
+    }
+
     [HttpPatch("{id:guid}/status")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateOrderStatusRequest request)
     {
-        if (!Enum.IsDefined(typeof(OrderStatus), request.Status))
-            return BadRequest(new { Message = "Trạng thái đơn hàng không hợp lệ." });
-
-        await _mediator.Send(new UpdateOrderStatusCommand(id, (OrderStatus)request.Status));
+        await _mediator.Send(new UpdateOrderStatusCommand(id, request.Status));
         return NoContent();
     }
 }
 
 public class UpdateOrderStatusRequest
 {
-    public int Status { get; set; }
+    public OrderStatus Status { get; set; }
 }

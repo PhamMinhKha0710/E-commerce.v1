@@ -18,6 +18,27 @@ public enum PaymentMethod
     EWallet = 2
 }
 
+public enum PaymentProvider
+{
+    PayOS = 0
+}
+
+public enum PaymentStatus
+{
+    Pending = 0,
+    Paid = 1,
+    Failed = 2,
+    Expired = 3,
+    Cancelled = 4
+}
+
+public enum StockReservationStatus
+{
+    Reserved = 0,
+    Converted = 1,
+    Released = 2
+}
+
 public enum DiscountType
 {
     Percentage = 0,
