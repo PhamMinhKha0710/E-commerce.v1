@@ -39,5 +39,17 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .WithOne(i => i.Order)
             .HasForeignKey(i => i.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Property(x => x.AhamoveOrderId).HasMaxLength(64);
+        builder.HasIndex(x => x.AhamoveOrderId).IsUnique().HasFilter("[AhamoveOrderId] IS NOT NULL");
+
+        builder.Property(x => x.AhamoveLastStatus).HasMaxLength(64);
+
+        builder.Property(x => x.ShippingReceiverName).HasMaxLength(128);
+        builder.Property(x => x.ShippingReceiverPhone).HasMaxLength(32);
+        builder.Property(x => x.ShippingAddressLine).HasMaxLength(512);
+        builder.Property(x => x.ShippingNote).HasMaxLength(512);
+        builder.Property(x => x.ShippingServiceId).HasMaxLength(64);
+        builder.Property(x => x.ShippingFee).HasColumnType("decimal(18,2)");
     }
 }

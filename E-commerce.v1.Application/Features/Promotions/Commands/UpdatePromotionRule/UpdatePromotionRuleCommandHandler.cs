@@ -1,30 +1,30 @@
 using E_commerce.v1.Application.DTOs.Promotion;
+using E_commerce.v1.Application.Features.Promotions.Services;
 using E_commerce.v1.Application.Interfaces;
-using E_commerce.v1.Domain.Entities;
-using E_commerce.v1.Domain.Enums;
 using E_commerce.v1.Domain.Exceptions;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace E_commerce.v1.Application.Features.Promotions.Commands.UpdatePromotionRule;
 
 public class UpdatePromotionRuleCommandHandler : IRequestHandler<UpdatePromotionRuleCommand>
 {
-    private readonly IAppDbContext _context;
+    private readonly IPromotionRuleRepository _promotionRuleRepository;
+    private readonly IPromotionRuleBuilderService _promotionRuleBuilder;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public UpdatePromotionRuleCommandHandler(IAppDbContext context)
+    public UpdatePromotionRuleCommandHandler(
+        IPromotionRuleRepository promotionRuleRepository,
+        IPromotionRuleBuilderService promotionRuleBuilder,
+        IUnitOfWork unitOfWork)
     {
-        _context = context;
+        _promotionRuleRepository = promotionRuleRepository;
+        _promotionRuleBuilder = promotionRuleBuilder;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task Handle(UpdatePromotionRuleCommand request, CancellationToken cancellationToken)
     {
-        var rule = await _context.PromotionRules
-            .Include(r => r.Products)
-            .Include(r => r.Categories)
-            .Include(r => r.BuyXGetYAction)
-            .Include(r => r.PercentageAction)
-            .FirstOrDefaultAsync(r => r.Id == request.Id, cancellationToken);
+        var rule = await _promotionRuleRepository.GetByIdForUpdateAsync(request.Id, cancellationToken);
 
         if (rule == null)
             throw new NotFoundException("Promotion rule không tồn tại.");
@@ -39,62 +39,13 @@ public class UpdatePromotionRuleCommandHandler : IRequestHandler<UpdatePromotion
 
         rule.Products.Clear();
         rule.Categories.Clear();
-        ApplyScope(rule, dto.Scope);
+        await _promotionRuleBuilder.ApplyScopeAsync(rule, dto.Scope, cancellationToken);
 
         rule.BuyXGetYAction = null;
         rule.PercentageAction = null;
-        ApplyAction(rule, dto);
+        _promotionRuleBuilder.ApplyAction(rule, dto);
 
-        await _context.SaveChangesAsync(cancellationToken);
-    }
-
-    private static void ApplyScope(PromotionRule rule, PromotionRuleScopeDto? scope)
-    {
-        if (scope?.ProductIds != null)
-        {
-            foreach (var id in scope.ProductIds.Distinct())
-                rule.Products.Add(new PromotionRuleProduct { PromotionRuleId = rule.Id, ProductId = id });
-        }
-
-        if (scope?.CategoryIds != null)
-        {
-            foreach (var id in scope.CategoryIds.Distinct())
-                rule.Categories.Add(new PromotionRuleCategory { PromotionRuleId = rule.Id, CategoryId = id });
-        }
-    }
-
-    private static void ApplyAction(PromotionRule rule, PromotionRuleUpsertDto dto)
-    {
-        switch (dto.Type)
-        {
-            case PromotionRuleType.BuyXGetY:
-            {
-                var a = dto.BuyXGetYAction!;
-                rule.BuyXGetYAction = new PromotionBuyXGetYAction
-                {
-                    PromotionRuleId = rule.Id,
-                    BuyProductId = a.BuyProductId,
-                    BuyCategoryId = a.BuyCategoryId,
-                    BuyQty = a.BuyQty,
-                    GetProductId = a.GetProductId,
-                    GetCategoryId = a.GetCategoryId,
-                    GetQty = a.GetQty,
-                    LimitPerOrder = a.LimitPerOrder
-                };
-                break;
-            }
-            case PromotionRuleType.PercentageDiscount:
-            {
-                var a = dto.PercentageAction!;
-                rule.PercentageAction = new PromotionPercentageAction
-                {
-                    PromotionRuleId = rule.Id,
-                    Percent = a.Percent,
-                    Target = a.Target
-                };
-                break;
-            }
-        }
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }
 

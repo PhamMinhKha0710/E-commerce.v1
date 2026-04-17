@@ -2,31 +2,30 @@ using E_commerce.v1.Application.Interfaces;
 using E_commerce.v1.Domain.Entities;
 using E_commerce.v1.Domain.Exceptions;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace E_commerce.v1.Application.Features.Variants.Commands.CreateVariant;
 
 public class CreateVariantCommandHandler : IRequestHandler<CreateVariantCommand, Guid>
 {
-    private readonly IAppDbContext _dbContext;
+    private readonly IVariantRepository _variantRepository;
+    private readonly IProductQueryRepository _productRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public CreateVariantCommandHandler(IAppDbContext dbContext)
+    public CreateVariantCommandHandler(IVariantRepository variantRepository, IProductQueryRepository productRepository, IUnitOfWork unitOfWork)
     {
-        _dbContext = dbContext;
+        _variantRepository = variantRepository;
+        _productRepository = productRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Guid> Handle(CreateVariantCommand request, CancellationToken cancellationToken)
     {
-        var productExists = await _dbContext.Products
-            .AsNoTracking()
-            .AnyAsync(p => p.Id == request.ProductId, cancellationToken);
-        if (!productExists)
+        var product = await _productRepository.GetProductByIdAsync(request.ProductId, cancellationToken);
+        if (product == null)
             throw new NotFoundException("Sản phẩm không tồn tại.");
 
         var normalizedSku = request.Sku.Trim();
-        var skuExists = await _dbContext.ProductVariants
-            .AsNoTracking()
-            .AnyAsync(v => v.Sku == normalizedSku, cancellationToken);
+        var skuExists = await _variantRepository.SkuExistsAsync(normalizedSku, excludeVariantId: null, cancellationToken);
         if (skuExists)
             throw new BadRequestException("SKU đã tồn tại trong hệ thống.");
 
@@ -58,8 +57,8 @@ public class CreateVariantCommandHandler : IRequestHandler<CreateVariantCommand,
             }
         }
 
-        await _dbContext.ProductVariants.AddAsync(variant, cancellationToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _variantRepository.CreateVariantAsync(variant, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return variant.Id;
     }

@@ -7,17 +7,17 @@ namespace E_commerce.v1.Application.Features.Reviews.Queries.GetProductReviews;
 
 public class GetProductReviewsQueryHandler : IRequestHandler<GetProductReviewsQuery, ProductReviewsSummaryDto>
 {
-    private readonly IReviewRepository _reviewRepository;
+    private readonly IReviewReadRepository _reviewReadRepository;
 
-    public GetProductReviewsQueryHandler(IReviewRepository reviewRepository)
+    public GetProductReviewsQueryHandler(IReviewReadRepository reviewReadRepository)
     {
-        _reviewRepository = reviewRepository;
+        _reviewReadRepository = reviewReadRepository;
     }
 
     public async Task<ProductReviewsSummaryDto> Handle(GetProductReviewsQuery request, CancellationToken cancellationToken)
     {
         var page = request.ResolvedPage;
         var pageSize = request.PageSize > 0 ? request.PageSize : 10;
-        return await _reviewRepository.GetProductReviewsAsync(request.ProductId, page, pageSize, cancellationToken);
+        return await _reviewReadRepository.GetProductReviewsAsync(request.ProductId, page, pageSize, cancellationToken);
     }
 }

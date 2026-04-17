@@ -1,7 +1,9 @@
 using E_commerce.v1.Application.Interfaces;
+using E_commerce.v1.Application.Shipping;
 using E_commerce.v1.Infrastructure.Data;
 using E_commerce.v1.Infrastructure.Repositories;
 using E_commerce.v1.Infrastructure.Security;
+using E_commerce.v1.Infrastructure.Shipping;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -19,15 +21,29 @@ public static class DependencyInjection
                 b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
-        // Đảm bảo rằng mỗi khi Application yêu cầu Interface IAppDbContext, hệ thống sẽ trả về DbContext thật
-        services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ICartRepository, CartRepository>();
+        services.AddScoped<ICartReadRepository, CartReadRepository>();
         services.AddScoped<ICheckoutRepository, CheckoutRepository>();
+        services.AddScoped<ICouponRepository, CouponRepository>();
         services.AddScoped<IReviewRepository, ReviewRepository>();
+        services.AddScoped<IReviewReadRepository, ReviewReadRepository>();
+        services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<IProductQueryRepository, ProductQueryRepository>();
+        services.AddScoped<IProductReadRepository, ProductReadRepository>();
+        services.AddScoped<IPromotionRuleRepository, PromotionRuleRepository>();
+        services.AddScoped<IPromotionRuleReadRepository, PromotionRuleReadRepository>();
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<ICategoryReadRepository, CategoryReadRepository>();
+        services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IOrderReadRepository, OrderReadRepository>();
+        services.AddScoped<IVariantRepository, VariantRepository>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+        services.Configure<AhamoveOptions>(configuration.GetSection(AhamoveOptions.SectionName));
+        services.AddHttpClient<IAhamoveClient, AhamoveClient>();
 
         // Auth
         services.AddOptions<JwtOptions>().Bind(configuration.GetSection(JwtOptions.SectionName));

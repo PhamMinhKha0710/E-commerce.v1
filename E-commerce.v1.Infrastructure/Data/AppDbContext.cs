@@ -1,12 +1,12 @@
-using E_commerce.v1.Application.Interfaces;
 using E_commerce.v1.Domain.Entities;
 using E_commerce.v1.Domain.Common;
+using E_commerce.v1.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 
 namespace E_commerce.v1.Infrastructure.Data;
 
-public class AppDbContext : DbContext, IAppDbContext
+public class AppDbContext : DbContext
 {
     private readonly ICurrentUserService _currentUserService;
 

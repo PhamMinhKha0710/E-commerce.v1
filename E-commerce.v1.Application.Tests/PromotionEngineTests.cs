@@ -3,6 +3,7 @@ using E_commerce.v1.Application.Interfaces;
 using E_commerce.v1.Domain.Entities;
 using E_commerce.v1.Domain.Enums;
 using E_commerce.v1.Infrastructure.Data;
+using E_commerce.v1.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace E_commerce.v1.Application.Tests;
@@ -46,7 +47,8 @@ public class PromotionEngineTests
             new(product.Id, product.CategoryId, UnitPrice: 100, Quantity: 1)
         };
 
-        var best = await PromotionEngine.CalculateBestAsync(context, items, now, CancellationToken.None);
+        var readRepo = new PromotionRuleReadRepository(context);
+        var best = await PromotionEngine.CalculateBestAsync(readRepo, items, now, CancellationToken.None);
 
         Assert.NotNull(best);
         Assert.Equal(20m, best!.DiscountAmount);
@@ -90,7 +92,8 @@ public class PromotionEngineTests
             new(product.Id, product.CategoryId, UnitPrice: 100, Quantity: 1)
         };
 
-        var best = await PromotionEngine.CalculateBestAsync(context, items, now, CancellationToken.None);
+        var readRepo = new PromotionRuleReadRepository(context);
+        var best = await PromotionEngine.CalculateBestAsync(readRepo, items, now, CancellationToken.None);
 
         Assert.NotNull(best);
         Assert.Equal(10m, best!.DiscountAmount);
@@ -124,7 +127,8 @@ public class PromotionEngineTests
         await context.SaveChangesAsync();
 
         var items = new List<PromotionCartItem> { new(productId, categoryId, 100, 1) };
-        var bestPromo = await PromotionEngine.CalculateBestAsync(context, items, now, CancellationToken.None);
+        var readRepo = new PromotionRuleReadRepository(context);
+        var bestPromo = await PromotionEngine.CalculateBestAsync(readRepo, items, now, CancellationToken.None);
         var subtotalAfterPromo = 100 - (bestPromo?.DiscountAmount ?? 0);
         var couponDiscount = Math.Min(cart.CouponDiscountPreview, subtotalAfterPromo);
 

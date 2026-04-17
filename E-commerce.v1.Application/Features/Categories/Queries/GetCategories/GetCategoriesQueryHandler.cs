@@ -2,29 +2,21 @@ using E_commerce.v1.Application.DTOs.Category;
 using E_commerce.v1.Application.Interfaces;
 using E_commerce.v1.Domain.Entities;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace E_commerce.v1.Application.Features.Categories.Queries.GetCategories;
 
 public class GetCategoriesQueryHandler : IRequestHandler<GetCategoriesQuery, IReadOnlyList<CategoryListDto>>
 {
-    private readonly IAppDbContext _context;
+    private readonly ICategoryRepository _categoryRepository;
 
-    public GetCategoriesQueryHandler(IAppDbContext context)
+    public GetCategoriesQueryHandler(ICategoryRepository categoryRepository)
     {
-        _context = context;
+        _categoryRepository = categoryRepository;
     }
 
     public async Task<IReadOnlyList<CategoryListDto>> Handle(GetCategoriesQuery request, CancellationToken cancellationToken)
     {
-        var roots = await _context.Categories
-            .AsNoTracking()
-            .Where(c => c.ParentCategoryId == null)
-            .Include(c => c.Children)
-            .Include(c => c.Products)
-            .OrderBy(c => c.Name)
-            .ToListAsync(cancellationToken);
-
+        var roots = await _categoryRepository.GetAllCategoriesHierarchyAsync(cancellationToken);
         return roots.Select(MapCategory).ToList();
     }
 

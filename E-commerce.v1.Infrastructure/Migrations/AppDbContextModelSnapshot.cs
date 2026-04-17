@@ -272,6 +272,14 @@ namespace E_commerce.v1.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AhamoveLastStatus")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("AhamoveOrderId")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
                     b.Property<string>("CouponCode")
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
@@ -315,6 +323,35 @@ namespace E_commerce.v1.Infrastructure.Migrations
                     b.Property<decimal>("RankDiscount")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<string>("ShippingAddressLine")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<decimal>("ShippingFee")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<double?>("ShippingLat")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("ShippingLng")
+                        .HasColumnType("float");
+
+                    b.Property<string>("ShippingNote")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<string>("ShippingReceiverName")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("ShippingReceiverPhone")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("ShippingServiceId")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
@@ -331,6 +368,10 @@ namespace E_commerce.v1.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AhamoveOrderId")
+                        .IsUnique()
+                        .HasFilter("[AhamoveOrderId] IS NOT NULL");
 
                     b.HasIndex("OrderNumber")
                         .IsUnique();

@@ -1,7 +1,6 @@
 using E_commerce.v1.Application.Interfaces;
 using E_commerce.v1.Domain.Entities;
 using E_commerce.v1.Domain.Enums;
-using Microsoft.EntityFrameworkCore;
 
 namespace E_commerce.v1.Application.Common;
 
@@ -12,7 +11,7 @@ public record PromotionCandidate(Guid RuleId, decimal DiscountAmount, int Priori
 public static class PromotionEngine
 {
     public static async Task<PromotionCandidate?> CalculateBestAsync(
-        IAppDbContext context,
+        IPromotionRuleReadRepository promotionRuleReadRepository,
         IReadOnlyList<PromotionCartItem> items,
         DateTime utcNow,
         CancellationToken cancellationToken)
@@ -20,14 +19,7 @@ public static class PromotionEngine
         if (items.Count == 0)
             return null;
 
-        var rules = await context.PromotionRules
-            .AsNoTracking()
-            .Include(r => r.Products)
-            .Include(r => r.Categories)
-            .Include(r => r.BuyXGetYAction)
-            .Include(r => r.PercentageAction)
-            .Where(r => r.IsActive && r.StartDate <= utcNow && r.EndDate >= utcNow)
-            .ToListAsync(cancellationToken);
+        var rules = await promotionRuleReadRepository.GetActiveRulesAsync(utcNow, cancellationToken);
 
         PromotionCandidate? best = null;
         foreach (var rule in rules)

@@ -101,4 +101,111 @@ public class CartRepository : ICartRepository
             else if (number is long ln) yield return (int)ln;
         }
     }
+
+    public async Task<Cart?> GetCartWithItemsAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        return await _context.Carts
+            .Include(c => c.CartItems)
+            .ThenInclude(i => i.Product)
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+    }
+
+    public async Task<Coupon?> GetCouponByCodeAsync(string code, CancellationToken cancellationToken)
+    {
+        return await _context.Coupons
+            .FirstOrDefaultAsync(c => c.Code == code.ToUpperInvariant(), cancellationToken);
+    }
+
+    public async Task UpdateCartCouponAsync(Guid cartId, Guid couponId, string code, decimal discount, CancellationToken cancellationToken)
+    {
+        var cart = await _context.Carts.FirstOrDefaultAsync(c => c.Id == cartId, cancellationToken);
+        if (cart != null)
+        {
+            cart.AppliedCouponId = couponId;
+            cart.AppliedCouponCode = code;
+            cart.CouponDiscountPreview = discount;
+        }
+    }
+
+    public async Task SaveChangesAsync(CancellationToken cancellationToken)
+    {
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<Cart?> GetCartByUserIdAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        return await _context.Carts
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+    }
+
+    public async Task<CartItem?> GetCartItemWithDetailsAsync(Guid cartItemId, CancellationToken cancellationToken)
+    {
+        return await _context.CartItems
+            .Include(ci => ci.Cart)
+            .Include(ci => ci.Product)
+            .FirstOrDefaultAsync(ci => ci.Id == cartItemId, cancellationToken);
+    }
+
+    public async Task RemoveCartItemAsync(Guid cartItemId, CancellationToken cancellationToken)
+    {
+        var cartItem = await _context.CartItems.FirstOrDefaultAsync(ci => ci.Id == cartItemId, cancellationToken);
+        if (cartItem != null)
+        {
+            _context.CartItems.Remove(cartItem);
+        }
+    }
+
+    public async Task<CartItem?> UpdateCartItemQuantityAsync(Guid cartItemId, int quantity, CancellationToken cancellationToken)
+    {
+        var cartItem = await _context.CartItems.FirstOrDefaultAsync(ci => ci.Id == cartItemId, cancellationToken);
+        if (cartItem != null)
+        {
+            if (quantity <= 0)
+            {
+                _context.CartItems.Remove(cartItem);
+            }
+            else
+            {
+                cartItem.Quantity = quantity;
+            }
+        }
+        return cartItem;
+    }
+
+    public async Task ClearCartAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var cart = await _context.Carts.FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (cart != null)
+        {
+            _context.Carts.Remove(cart);
+        }
+    }
+
+    public async Task<Cart?> SyncCartItemsAsync(Guid userId, List<CartItem> items, CancellationToken cancellationToken)
+    {
+        var cart = await _context.Carts
+            .Include(c => c.CartItems)
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+
+        if (cart == null)
+        {
+            cart = new Cart { UserId = userId, CartItems = new List<CartItem>() };
+            _context.Carts.Add(cart);
+        }
+
+        cart.CartItems = items;
+        return cart;
+    }
+
+    public async Task<Product?> GetProductByIdAsync(Guid productId, CancellationToken cancellationToken)
+    {
+        return await _context.Products
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
+    }
+
+    public async Task<bool> UserExistsAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        return await _context.Users.AnyAsync(u => u.Id == userId, cancellationToken);
+    }
 }

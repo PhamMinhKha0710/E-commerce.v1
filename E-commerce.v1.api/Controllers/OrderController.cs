@@ -1,6 +1,8 @@
 using E_commerce.v1.Application.DTOs.Order;
+using E_commerce.v1.Application.DTOs.Shipping;
 using E_commerce.v1.Application.Features.Order.Queries.GetMyOrders;
 using E_commerce.v1.Application.Features.Order.Queries.GetOrderById;
+using E_commerce.v1.Application.Features.Shipping.Commands.CreateShipment;
 using E_commerce.v1.api.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -33,6 +35,14 @@ public class OrderController : ControllerBase
     {
         var userId = User.GetRequiredUserId();
         var result = await _mediator.Send(new GetOrderByIdQuery(userId, id));
+        return Ok(result);
+    }
+
+    [HttpPost("{orderId:guid}/create-shipment")]
+    public async Task<ActionResult<CreateShipmentResponse>> CreateShipment(Guid orderId, [FromBody] CreateShipmentRequest body)
+    {
+        var userId = User.GetRequiredUserId();
+        var result = await _mediator.Send(new CreateShipmentCommand(userId, orderId, body));
         return Ok(result);
     }
 }

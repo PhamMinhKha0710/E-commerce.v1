@@ -30,6 +30,11 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
     }
 
+    public Task<User?> GetByIdAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        return _context.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+    }
+
     public Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken)
     {
         return _context.Users.AsNoTracking().AnyAsync(u => u.Email == email, cancellationToken);
@@ -43,10 +48,5 @@ public class UserRepository : IUserRepository
     public Task AddAsync(User user, CancellationToken cancellationToken)
     {
         return _context.Users.AddAsync(user, cancellationToken).AsTask();
-    }
-
-    public Task SaveChangesAsync(CancellationToken cancellationToken)
-    {
-        return _context.SaveChangesAsync(cancellationToken);
     }
 }

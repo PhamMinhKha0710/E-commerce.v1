@@ -1,30 +1,35 @@
 using E_commerce.v1.Application.DTOs.Cart;
 using E_commerce.v1.Application.Features.Cart.Queries;
 using E_commerce.v1.Application.Interfaces;
+using CartEntity = E_commerce.v1.Domain.Entities.Cart;
+using E_commerce.v1.Domain.Entities;
 using E_commerce.v1.Domain.Exceptions;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace E_commerce.v1.Application.Features.Cart.Commands;
 
 public class SyncCartCommandHandler : IRequestHandler<SyncCartCommand, CartDto>
 {
-    private readonly IAppDbContext _context;
+    private readonly ICartRepository _cartRepository;
     private readonly IMediator _mediator;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public SyncCartCommandHandler(IAppDbContext context, IMediator mediator)
+    public SyncCartCommandHandler(
+        ICartRepository cartRepository,
+        IMediator mediator,
+        IUnitOfWork unitOfWork)
     {
-        _context = context;
+        _cartRepository = cartRepository;
         _mediator = mediator;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<CartDto> Handle(SyncCartCommand request, CancellationToken cancellationToken)
     {
-        var userExists = await _context.Users.AnyAsync(u => u.Id == request.UserId, cancellationToken);
+        var userExists = await _cartRepository.UserExistsAsync(request.UserId, cancellationToken);
         if (!userExists)
             throw new BadRequestException("Tài khoản không tồn tại trong hệ thống. Vui lòng đăng nhập lại.");
 
-        // Gộp trùng ProductId từ localStorage (nhiều dòng cùng SP → cộng quantity).
         var guestByProduct = request.Items
             .GroupBy(x => x.ProductId)
             .ToDictionary(g => g.Key, g => g.Sum(x => x.Quantity));
@@ -32,32 +37,26 @@ public class SyncCartCommandHandler : IRequestHandler<SyncCartCommand, CartDto>
         if (guestByProduct.Count == 0)
             return await _mediator.Send(new GetCartQuery { UserId = request.UserId }, cancellationToken);
 
-        var cart = await _context.Carts
-            .Include(c => c.CartItems)
-            .FirstOrDefaultAsync(c => c.UserId == request.UserId, cancellationToken);
+        var cart = await _cartRepository.GetCartWithItemsAsync(request.UserId, cancellationToken);
 
         if (cart == null)
         {
-            cart = new E_commerce.v1.Domain.Entities.Cart
+            cart = new CartEntity
             {
                 UserId = request.UserId,
-                CartItems = new List<E_commerce.v1.Domain.Entities.CartItem>()
+                CartItems = new List<CartItem>()
             };
-            _context.Carts.Add(cart);
         }
 
-        cart.CartItems ??= new List<E_commerce.v1.Domain.Entities.CartItem>();
+        cart.CartItems ??= new List<CartItem>();
 
         var initialDbQty = cart.CartItems
             .GroupBy(ci => ci.ProductId)
             .ToDictionary(g => g.Key, g => g.Sum(x => x.Quantity));
 
-        // Validate toàn bộ từ DB: tồn tại, đang bán, đủ kho sau merge (không tin giá từ FE).
         foreach (var (productId, guestQty) in guestByProduct)
         {
-            var product = await _context.Products
-                .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
+            var product = await _cartRepository.GetProductByIdAsync(productId, cancellationToken);
 
             if (product == null)
                 throw new NotFoundException($"Sản phẩm không tồn tại: {productId}.");
@@ -79,7 +78,7 @@ public class SyncCartCommandHandler : IRequestHandler<SyncCartCommand, CartDto>
                 existing.Quantity = merged;
             else
             {
-                cart.CartItems.Add(new E_commerce.v1.Domain.Entities.CartItem
+                cart.CartItems.Add(new CartItem
                 {
                     CartId = cart.Id,
                     ProductId = productId,
@@ -88,7 +87,7 @@ public class SyncCartCommandHandler : IRequestHandler<SyncCartCommand, CartDto>
             }
         }
 
-        await _context.SaveChangesAsync(cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return await _mediator.Send(new GetCartQuery { UserId = request.UserId }, cancellationToken);
     }

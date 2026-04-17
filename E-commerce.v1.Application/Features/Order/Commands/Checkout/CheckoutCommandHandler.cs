@@ -5,15 +5,15 @@ namespace E_commerce.v1.Application.Features.Order.Commands.Checkout;
 
 public class CheckoutCommandHandler : IRequestHandler<CheckoutCommand, CheckoutResponse>
 {
-    private readonly ICheckoutRepository _checkoutRepository;
+    private readonly ICheckoutService _checkoutService;
 
-    public CheckoutCommandHandler(ICheckoutRepository checkoutRepository)
+    public CheckoutCommandHandler(ICheckoutService checkoutService)
     {
-        _checkoutRepository = checkoutRepository;
+        _checkoutService = checkoutService;
     }
 
     public async Task<CheckoutResponse> Handle(CheckoutCommand request, CancellationToken cancellationToken)
     {
-        return await _checkoutRepository.CheckoutAsync(request.UserId, request.PaymentMethod, cancellationToken);
+        return await _checkoutService.CheckoutAsync(request.UserId, request.PaymentMethod, request.Shipping, cancellationToken);
     }
 }
