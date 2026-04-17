@@ -1,6 +1,10 @@
+using E_commerce.v1.Application.DTOs.Common;
+using E_commerce.v1.Application.DTOs.Promotion;
 using E_commerce.v1.Application.Features.Promotions.Commands.CreatePromotionRule;
 using E_commerce.v1.Application.Features.Promotions.Commands.DeletePromotionRule;
 using E_commerce.v1.Application.Features.Promotions.Commands.UpdatePromotionRule;
+using E_commerce.v1.Application.Features.Promotions.Queries.GetPromotionRuleById;
+using E_commerce.v1.Application.Features.Promotions.Queries.GetPromotionRules;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,20 +23,34 @@ public class AdminPromotionsController : ControllerBase
         _mediator = mediator;
     }
 
+    [HttpGet]
+    public async Task<ActionResult<PagedResult<PromotionRuleDto>>> List(
+        [FromQuery] bool? isActive = null,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        var result = await _mediator.Send(new GetPromotionRulesQuery(isActive, pageNumber, pageSize));
+        return Ok(result);
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<PromotionRuleDetailDto>> GetById(Guid id)
+    {
+        var result = await _mediator.Send(new GetPromotionRuleByIdQuery(id));
+        return Ok(result);
+    }
+
     [HttpPost]
     public async Task<ActionResult<Guid>> Create([FromBody] CreatePromotionRuleCommand command)
     {
         var id = await _mediator.Send(command);
-        return Ok(id);
+        return CreatedAtAction(nameof(GetById), new { id }, id);
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<ActionResult> Update(Guid id, [FromBody] UpdatePromotionRuleCommand command)
+    public async Task<ActionResult> Update(Guid id, [FromBody] PromotionRuleUpsertDto rule)
     {
-        if (id != command.Id)
-            return BadRequest(new { Message = "ID trên URL không khớp với dữ liệu." });
-
-        await _mediator.Send(command);
+        await _mediator.Send(new UpdatePromotionRuleCommand(id, rule));
         return NoContent();
     }
 
@@ -43,4 +61,3 @@ public class AdminPromotionsController : ControllerBase
         return NoContent();
     }
 }
-
