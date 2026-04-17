@@ -18,7 +18,9 @@ public class ReviewsController : ControllerBase
         _mediator = mediator;
     }
 
+    /// <summary>Đăng review (deprecated, dùng POST api/v1/products/{productId}/reviews).</summary>
     [HttpPost]
+    [Obsolete("Use POST api/v1/products/{productId}/reviews instead.")]
     public async Task<ActionResult<Guid>> PostReview([FromBody] PostReviewCommand command)
     {
         command.UserId = User.GetRequiredUserId();

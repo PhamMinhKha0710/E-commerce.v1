@@ -1,3 +1,83 @@
+@baseUrl = http://localhost:5197
+@token = REPLACE_WITH_JWT
+
+### Create PayOS payment link (requires auth) - NEW canonical route
+POST {{baseUrl}}/api/v1/payment/payos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderId": "3baa5972-5781-4727-a59d-1e3908e1d1d7",
+  "totalAmount": 279999950.00,
+  "description": "Thanh toan tien"
+}
+
+### [DEPRECATED] Create PayOS payment link via legacy "/create" suffix
+POST {{baseUrl}}/api/v1/payment/payos/create
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderId": "3baa5972-5781-4727-a59d-1e3908e1d1d7",
+  "totalAmount": 279999950.00,
+  "description": "Thanh toan tien"
+}
+
+### Generate signed webhook payload (DEV only)
+# Copy the response JSON and POST it to /api/v1/payment/payos/webhook
+POST {{baseUrl}}/api/v1/dev/payos/webhook-simulator/generate
+Content-Type: application/json
+
+{
+  "orderCode": 260417034039106,
+  "amount": 280000000,
+  "status": "PAID",
+  "paymentLinkId": "8ed4922ccc074d579e97dfae1a3f08d3",
+  "id": "evt-dev-001"
+}
+
+### Post webhook to API (no auth; needs raw body) - NEW canonical route
+POST {{baseUrl}}/api/v1/webhooks/payos
+Content-Type: application/json
+
+{
+  "data": {
+    "orderCode": 260417034039106,
+    "amount": 280000000,
+    "status": "PAID",
+    "paymentLinkId": "8ed4922ccc074d579e97dfae1a3f08d3",
+    "id": "evt-dev-001"
+  },
+  "signature": "REPLACE_WITH_SIGNATURE_FROM_GENERATE_CALL"
+}
+
+### [DEPRECATED] Post webhook via legacy route
+POST {{baseUrl}}/api/v1/payment/payos/webhook
+Content-Type: application/json
+
+{
+  "data": {
+    "orderCode": 260417034039106,
+    "amount": 280000000,
+    "status": "PAID",
+    "paymentLinkId": "8ed4922ccc074d579e97dfae1a3f08d3",
+    "id": "evt-dev-001"
+  },
+  "signature": "REPLACE_WITH_SIGNATURE_FROM_GENERATE_CALL"
+}
+
+### Trigger webhook end-to-end (DEV only) - one-step: pass flat fields, backend signs & runs webhook pipeline
+POST {{baseUrl}}/api/v1/dev/payos/webhook-simulator/trigger
+Content-Type: application/json
+
+{
+  "orderCode": 260417034039106,
+  "amount": 280000000,
+  "status": "PAID",
+  "paymentLinkId": "8ed4922ccc074d579e97dfae1a3f08d3",
+  "id": "evt-dev-trigger-001"
+}
+
 @HostAddress = http://localhost:5197
 @JwtToken = replace_with_returned_token
 
@@ -33,8 +113,153 @@ Content-Type: application/json
   "refreshToken": "chuỗi_refresh_token_ngẫu_nhiên"
 }
 
-### TEST GÓC NHÌN BẢO MẬT ROLE ADMIN (Truyền token Admin vào header Authorization)
+### TEST GÓC NHÌN BẢO MẬT ROLE ADMIN - NEW (chỉ bật trong Development)
+GET {{HostAddress}}/api/v1/dev/sanity/admin-profile
+Authorization: Bearer {{JwtToken}}
+
+### [DEPRECATED] Legacy auth/admin-profile
 GET {{HostAddress}}/api/v1/auth/admin-profile
+Authorization: Bearer {{JwtToken}}
+
+### Add item to cart - NEW RESTful
+POST {{HostAddress}}/api/v1/cart/items
+Authorization: Bearer {{JwtToken}}
+Content-Type: application/json
+
+{
+  "productId": "00000000-0000-0000-0000-000000000000",
+  "quantity": 1
+}
+
+### [DEPRECATED] Add item via /cart/add
+POST {{HostAddress}}/api/v1/cart/add
+Authorization: Bearer {{JwtToken}}
+Content-Type: application/json
+
+{
+  "productId": "00000000-0000-0000-0000-000000000000",
+  "quantity": 1
+}
+
+### Checkout cart (optionally select subset via cartItemIds)
+POST {{HostAddress}}/api/v1/cart/checkout
+Authorization: Bearer {{JwtToken}}
+Content-Type: application/json
+
+{
+  "paymentMethod": 1,
+  "shipping": null,
+  "cartItemIds": null
+}
+
+### [DEPRECATED] Checkout selected items (use /cart/checkout with cartItemIds)
+POST {{HostAddress}}/api/v1/cart/checkout-selected
+Authorization: Bearer {{JwtToken}}
+Content-Type: application/json
+
+{
+  "paymentMethod": 1,
+  "cartItemIds": [],
+  "shipping": null
+}
+
+### Create shipment for order - NEW
+POST {{HostAddress}}/api/v1/orders/00000000-0000-0000-0000-000000000000/shipment
+Authorization: Bearer {{JwtToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "SGN-BIKE"
+}
+
+### [DEPRECATED] Create shipment via /create-shipment
+POST {{HostAddress}}/api/v1/orders/00000000-0000-0000-0000-000000000000/create-shipment
+Authorization: Bearer {{JwtToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "SGN-BIKE"
+}
+
+### Post review for a product - NEW nested
+POST {{HostAddress}}/api/v1/products/00000000-0000-0000-0000-000000000000/reviews
+Authorization: Bearer {{JwtToken}}
+Content-Type: application/json
+
+{
+  "rating": 5,
+  "comment": "Great!"
+}
+
+### [DEPRECATED] Post review via /reviews
+POST {{HostAddress}}/api/v1/reviews
+Authorization: Bearer {{JwtToken}}
+Content-Type: application/json
+
+{
+  "productId": "00000000-0000-0000-0000-000000000000",
+  "rating": 5,
+  "comment": "Great!"
+}
+
+### Admin create product - NEW
+POST {{HostAddress}}/api/v1/admin/products
+Authorization: Bearer {{JwtToken}}
+Content-Type: application/json
+
+{
+  "name": "Sample",
+  "price": 100000,
+  "sku": "SKU-DEMO",
+  "categoryId": "00000000-0000-0000-0000-000000000000"
+}
+
+### [DEPRECATED] Admin create via /products
+POST {{HostAddress}}/api/v1/products
+Authorization: Bearer {{JwtToken}}
+Content-Type: application/json
+
+{
+  "name": "Sample",
+  "price": 100000,
+  "sku": "SKU-DEMO",
+  "categoryId": "00000000-0000-0000-0000-000000000000"
+}
+
+### Huỷ đơn hàng (owner, trạng thái Pending/Confirmed & chưa thanh toán)
+POST {{HostAddress}}/api/v1/orders/00000000-0000-0000-0000-000000000000/cancel
+Authorization: Bearer {{JwtToken}}
+
+### Admin - liệt kê đơn hàng (filter status, khoảng ngày, paging)
+GET {{HostAddress}}/api/v1/admin/orders?status=0&pageNumber=1&pageSize=20
+Authorization: Bearer {{JwtToken}}
+
+### Admin - chi tiết đơn hàng theo ID
+GET {{HostAddress}}/api/v1/admin/orders/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{JwtToken}}
+
+### Admin - liệt kê coupon
+GET {{HostAddress}}/api/v1/admin/coupons?pageNumber=1&pageSize=20
+Authorization: Bearer {{JwtToken}}
+
+### Admin - chi tiết coupon
+GET {{HostAddress}}/api/v1/admin/coupons/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{JwtToken}}
+
+### Admin - liệt kê promotion
+GET {{HostAddress}}/api/v1/admin/promotions?isActive=true&pageNumber=1&pageSize=20
+Authorization: Bearer {{JwtToken}}
+
+### Admin - chi tiết promotion
+GET {{HostAddress}}/api/v1/admin/promotions/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{JwtToken}}
+
+### Admin - liệt kê variant theo productId
+GET {{HostAddress}}/api/v1/admin/variants?productId=00000000-0000-0000-0000-000000000000&pageNumber=1&pageSize=20
+Authorization: Bearer {{JwtToken}}
+
+### Admin - chi tiết variant
+GET {{HostAddress}}/api/v1/admin/variants/00000000-0000-0000-0000-000000000000
 Authorization: Bearer {{JwtToken}}
 
 ###
