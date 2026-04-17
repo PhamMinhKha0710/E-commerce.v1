@@ -1,0 +1,574 @@
+### ============================================================
+### E-commerce API - Full test payloads
+### ============================================================
+@baseUrl = http://localhost:5197
+@token   = REPLACE_WITH_JWT
+@adminToken = REPLACE_WITH_ADMIN_JWT
+
+### --- ID cho test (đổi GUID tuỳ DB của bạn) ---
+@userId       = 11111111-1111-1111-1111-111111111111
+@productId    = 22222222-2222-2222-2222-222222222222
+@categoryId   = 33333333-3333-3333-3333-333333333333
+@orderId      = 44444444-4444-4444-4444-444444444444
+@cartItemId   = 55555555-5555-5555-5555-555555555555
+@couponId     = 66666666-6666-6666-6666-666666666666
+@promotionId  = 77777777-7777-7777-7777-777777777777
+@variantId    = 88888888-8888-8888-8888-888888888888
+
+
+### ============================================================
+### 1) AUTH
+### ============================================================
+
+### 1.1 Register
+POST {{baseUrl}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "johndoe@example.com",
+  "password": "SecurePassword123!",
+  "confirmPassword": "SecurePassword123!"
+}
+
+### 1.2 Login (admin seeded sẵn)
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@mebisoft.com",
+  "password": "123456"
+}
+
+### 1.3 Refresh token
+POST {{baseUrl}}/api/v1/auth/refresh-token
+Content-Type: application/json
+
+{
+  "accessToken": "eyJhbGciOiJI...",
+  "refreshToken": "replace_refresh_token_here"
+}
+
+
+### ============================================================
+### 2) CART (user)
+### ============================================================
+
+### 2.1 Lấy giỏ hàng hiện tại
+GET {{baseUrl}}/api/v1/cart
+Authorization: Bearer {{token}}
+
+### 2.2 Sync giỏ guest → DB sau khi đăng nhập
+POST {{baseUrl}}/api/v1/cart/sync
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "items": [
+    { "productId": "{{productId}}", "quantity": 2 },
+    { "productId": "22222222-2222-2222-2222-222222222223", "quantity": 1 }
+  ]
+}
+
+### 2.3 Thêm item (RESTful)
+POST {{baseUrl}}/api/v1/cart/items
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "productId": "{{productId}}",
+  "quantity": 2
+}
+
+### 2.4 Update số lượng item (Quantity=0 để xoá)
+PUT {{baseUrl}}/api/v1/cart/items/{{cartItemId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "quantity": 3
+}
+
+### 2.5 Xoá 1 item
+DELETE {{baseUrl}}/api/v1/cart/items/{{cartItemId}}
+Authorization: Bearer {{token}}
+
+### 2.6 Xoá toàn bộ giỏ
+DELETE {{baseUrl}}/api/v1/cart
+Authorization: Bearer {{token}}
+
+### 2.7 Apply coupon lên giỏ
+POST {{baseUrl}}/api/v1/cart/apply-coupon
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "couponCode": "WELCOME10"
+}
+
+### 2.8 Checkout toàn bộ giỏ (COD)
+POST {{baseUrl}}/api/v1/cart/checkout
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "paymentMethod": 0,
+  "cartItemIds": null,
+  "shipping": null
+}
+
+### 2.9 Checkout - BankTransfer + shipping Ahamove
+POST {{baseUrl}}/api/v1/cart/checkout
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "paymentMethod": 1,
+  "cartItemIds": null,
+  "shipping": {
+    "serviceId": "SGN-BIKE",
+    "dropoff": {
+      "lat": 10.762622,
+      "lng": 106.660172,
+      "address": "123 Lê Lợi, Quận 1, TP.HCM",
+      "name": "Nguyễn Văn A",
+      "mobile": "0909000001"
+    },
+    "items": [
+      { "weight": 1.2, "length": 20, "width": 15, "height": 10, "description": "Hộp sản phẩm" }
+    ],
+    "routeOptimized": true,
+    "note": "Giao giờ hành chính"
+  }
+}
+
+### 2.10 Checkout - chỉ chọn subset cart items
+POST {{baseUrl}}/api/v1/cart/checkout
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "paymentMethod": 2,
+  "cartItemIds": [
+    "{{cartItemId}}"
+  ],
+  "shipping": null
+}
+
+
+### ============================================================
+### 3) ORDER (user)
+### ============================================================
+
+### 3.1 Chi tiết 1 đơn hàng của user
+GET {{baseUrl}}/api/v1/orders/{{orderId}}
+Authorization: Bearer {{token}}
+
+### 3.2 Huỷ đơn hàng (owner, Pending/Confirmed, chưa thanh toán)
+POST {{baseUrl}}/api/v1/orders/{{orderId}}/cancel
+Authorization: Bearer {{token}}
+
+### 3.3 Tạo shipment cho đơn (nested resource)
+POST {{baseUrl}}/api/v1/orders/{{orderId}}/shipment
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "serviceId": "SGN-BIKE"
+}
+
+
+### ============================================================
+### 4) PRODUCTS (public / user)
+### ============================================================
+
+### 4.1 Danh sách sản phẩm (filter + paging)
+GET {{baseUrl}}/api/v1/products?pageNumber=1&pageSize=20&categoryId={{categoryId}}
+
+### 4.2 Chi tiết sản phẩm
+GET {{baseUrl}}/api/v1/products/{{productId}}
+
+### 4.3 Liệt kê review sản phẩm
+GET {{baseUrl}}/api/v1/products/{{productId}}/reviews?pageNumber=1&pageSize=10
+
+### 4.4 Viết review (nested)
+POST {{baseUrl}}/api/v1/products/{{productId}}/reviews
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "rating": 5,
+  "comment": "Sản phẩm tốt, đóng gói cẩn thận."
+}
+
+
+### ============================================================
+### 5) ADMIN - ORDERS
+### ============================================================
+
+### 5.1 Liệt kê đơn (status=1 Confirmed)
+GET {{baseUrl}}/api/v1/admin/orders?status=1&pageNumber=1&pageSize=20
+Authorization: Bearer {{adminToken}}
+
+### 5.2 Liệt kê đơn theo khoảng ngày
+GET {{baseUrl}}/api/v1/admin/orders?fromDate=2026-01-01T00:00:00Z&toDate=2026-12-31T23:59:59Z&pageNumber=1&pageSize=50
+Authorization: Bearer {{adminToken}}
+
+### 5.3 Chi tiết đơn (admin)
+GET {{baseUrl}}/api/v1/admin/orders/{{orderId}}
+Authorization: Bearer {{adminToken}}
+
+### 5.4 Cập nhật trạng thái đơn: Confirmed | Cancelled | Completed
+### OrderStatus: Pending=0, Confirmed=1, Cancelled=2, Completed=3, Delivering=4
+PATCH {{baseUrl}}/api/v1/admin/orders/{{orderId}}/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": 1
+}
+
+
+### ============================================================
+### 6) ADMIN - PRODUCTS
+### ============================================================
+
+### 6.1 Tạo sản phẩm
+POST {{baseUrl}}/api/v1/admin/products
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Sữa tắm MebiSoft 500ml",
+  "description": "Sữa tắm dưỡng ẩm",
+  "price": 150000,
+  "stock": 100,
+  "categoryId": "{{categoryId}}",
+  "nameEn": "MebiSoft Body Wash 500ml",
+  "descriptionEn": "Moisturizing body wash",
+  "sku": "SKU-SBW-500",
+  "slug": "sua-tam-mebisoft-500ml",
+  "discount": 0,
+  "unit": "chai",
+  "unitEn": "bottle",
+  "isActive": true,
+  "productType": 0,
+  "kind": 0,
+  "buyType": 0,
+  "priority": 10,
+  "documentIds": [],
+  "storeId": null
+}
+
+### 6.2 Update sản phẩm (id lấy từ URL, body không cần chứa Id)
+PUT {{baseUrl}}/api/v1/admin/products/{{productId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "name": "Sữa tắm MebiSoft 500ml (updated)",
+  "description": "Mô tả mới",
+  "price": 165000,
+  "stock": 80,
+  "categoryId": "{{categoryId}}",
+  "nameEn": "MebiSoft Body Wash 500ml v2",
+  "descriptionEn": null,
+  "sku": "SKU-SBW-500",
+  "slug": "sua-tam-mebisoft-500ml",
+  "discount": 5,
+  "unit": "chai",
+  "unitEn": "bottle",
+  "isActive": true,
+  "productType": 0,
+  "kind": 0,
+  "buyType": 0,
+  "priority": 20,
+  "documentIds": [],
+  "storeId": null
+}
+
+### 6.3 Xoá sản phẩm
+DELETE {{baseUrl}}/api/v1/admin/products/{{productId}}
+Authorization: Bearer {{adminToken}}
+
+
+### ============================================================
+### 7) ADMIN - COUPONS
+### ============================================================
+
+### 7.1 Liệt kê coupon
+GET {{baseUrl}}/api/v1/admin/coupons?pageNumber=1&pageSize=20
+Authorization: Bearer {{adminToken}}
+
+### 7.2 Chi tiết coupon
+GET {{baseUrl}}/api/v1/admin/coupons/{{couponId}}
+Authorization: Bearer {{adminToken}}
+
+### 7.3 Tạo coupon (DiscountType: 0=Percentage, 1=FixedAmount)
+POST {{baseUrl}}/api/v1/admin/coupons
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "code": "WELCOME10",
+  "discountType": 0,
+  "value": 10,
+  "minOrderValue": 200000,
+  "startDate": "2026-01-01T00:00:00Z",
+  "endDate": "2026-12-31T23:59:59Z",
+  "usageLimit": 1000
+}
+
+### 7.4 Tạo coupon giảm cố định 50k
+POST {{baseUrl}}/api/v1/admin/coupons
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "code": "SALE50K",
+  "discountType": 1,
+  "value": 50000,
+  "minOrderValue": 300000,
+  "startDate": "2026-04-01T00:00:00Z",
+  "endDate": "2026-06-30T23:59:59Z",
+  "usageLimit": 500
+}
+
+
+### ============================================================
+### 8) ADMIN - PROMOTIONS (PromotionRule)
+### ============================================================
+
+### 8.1 Liệt kê promotion
+GET {{baseUrl}}/api/v1/admin/promotions?isActive=true&pageNumber=1&pageSize=20
+Authorization: Bearer {{adminToken}}
+
+### 8.2 Chi tiết promotion
+GET {{baseUrl}}/api/v1/admin/promotions/{{promotionId}}
+Authorization: Bearer {{adminToken}}
+
+### 8.3 Tạo promotion - PercentageDiscount (Type=1)
+### Target: 0=EligibleItems, 1=WholeOrder
+POST {{baseUrl}}/api/v1/admin/promotions
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "rule": {
+    "name": "Sale 15% tháng 4",
+    "type": 1,
+    "priority": 10,
+    "startDate": "2026-04-01T00:00:00Z",
+    "endDate": "2026-04-30T23:59:59Z",
+    "isActive": true,
+    "scope": {
+      "productIds": null,
+      "categoryIds": ["{{categoryId}}"]
+    },
+    "percentageAction": {
+      "percent": 15,
+      "target": 0
+    },
+    "buyXGetYAction": null
+  }
+}
+
+### 8.4 Tạo promotion - BuyXGetY (Type=0)
+POST {{baseUrl}}/api/v1/admin/promotions
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "rule": {
+    "name": "Mua 2 tặng 1",
+    "type": 0,
+    "priority": 20,
+    "startDate": "2026-05-01T00:00:00Z",
+    "endDate": "2026-05-31T23:59:59Z",
+    "isActive": true,
+    "scope": {
+      "productIds": ["{{productId}}"],
+      "categoryIds": null
+    },
+    "buyXGetYAction": {
+      "buyProductId": "{{productId}}",
+      "buyCategoryId": null,
+      "buyQty": 2,
+      "getProductId": "{{productId}}",
+      "getCategoryId": null,
+      "getQty": 1,
+      "limitPerOrder": 3
+    },
+    "percentageAction": null
+  }
+}
+
+### 8.5 Update promotion (id từ URL; body chỉ chứa rule)
+PUT {{baseUrl}}/api/v1/admin/promotions/{{promotionId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Sale 20% tháng 4 (updated)",
+  "type": 1,
+  "priority": 15,
+  "startDate": "2026-04-10T00:00:00Z",
+  "endDate": "2026-04-30T23:59:59Z",
+  "isActive": true,
+  "scope": {
+    "productIds": null,
+    "categoryIds": ["{{categoryId}}"]
+  },
+  "percentageAction": {
+    "percent": 20,
+    "target": 0
+  },
+  "buyXGetYAction": null
+}
+
+### 8.6 Xoá promotion
+DELETE {{baseUrl}}/api/v1/admin/promotions/{{promotionId}}
+Authorization: Bearer {{adminToken}}
+
+
+### ============================================================
+### 9) ADMIN - VARIANTS
+### ============================================================
+
+### 9.1 Liệt kê variant theo productId
+GET {{baseUrl}}/api/v1/admin/variants?productId={{productId}}&isActive=true&pageNumber=1&pageSize=20
+Authorization: Bearer {{adminToken}}
+
+### 9.2 Chi tiết variant
+GET {{baseUrl}}/api/v1/admin/variants/{{variantId}}
+Authorization: Bearer {{adminToken}}
+
+### 9.3 Tạo variant
+POST {{baseUrl}}/api/v1/admin/variants
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "productId": "{{productId}}",
+  "sku": "SKU-SBW-500-RED",
+  "price": 165000,
+  "inventory": 50,
+  "isActive": true,
+  "options": [
+    { "key": "color", "value": "red" },
+    { "key": "size",  "value": "500ml" }
+  ]
+}
+
+### 9.4 Update variant (id từ URL, body không cần Id)
+PUT {{baseUrl}}/api/v1/admin/variants/{{variantId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "sku": "SKU-SBW-500-RED-V2",
+  "price": 170000,
+  "inventory": 40,
+  "isActive": true,
+  "options": [
+    { "key": "color", "value": "crimson" },
+    { "key": "size",  "value": "500ml" }
+  ]
+}
+
+### 9.5 Xoá variant
+DELETE {{baseUrl}}/api/v1/admin/variants/{{variantId}}
+Authorization: Bearer {{adminToken}}
+
+
+### ============================================================
+### 10) PAYMENT - PAYOS
+### ============================================================
+
+### 10.1 Tạo link thanh toán PayOS (canonical)
+POST {{baseUrl}}/api/v1/payment/payos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderId": "{{orderId}}",
+  "totalAmount": 280000000,
+  "description": "Thanh toan don hang"
+}
+
+### 10.2 Webhook PayOS (canonical)
+POST {{baseUrl}}/api/v1/webhooks/payos
+Content-Type: application/json
+
+{
+  "data": {
+    "orderCode": 260417034039106,
+    "amount": 280000000,
+    "status": "PAID",
+    "paymentLinkId": "8ed4922ccc074d579e97dfae1a3f08d3",
+    "id": "evt-dev-001"
+  },
+  "signature": "REPLACE_WITH_SIGNATURE_FROM_GENERATE_CALL"
+}
+
+
+### ============================================================
+### 11) SHIPPING (Ahamove)
+### ============================================================
+
+### 11.1 Ước lượng phí ship
+POST {{baseUrl}}/api/v1/shipping/estimate
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderTime": 0,
+  "path": [
+    { "lat": 10.776889, "lng": 106.700806, "address": "Kho: 1 Nguyễn Huệ, Q1" },
+    { "lat": 10.762622, "lng": 106.660172, "address": "123 Lê Lợi, Q1", "name": "Nguyễn Văn A", "mobile": "0909000001" }
+  ],
+  "services": ["SGN-BIKE"],
+  "items": [
+    { "weight": 1.2, "length": 20, "width": 15, "height": 10, "description": "Hộp sản phẩm" }
+  ],
+  "routeOptimized": true
+}
+
+
+### ============================================================
+### 12) DEV TOOLS (chỉ chạy ở Development + role Admin)
+### ============================================================
+
+### 12.1 Sanity check admin role
+GET {{baseUrl}}/api/v1/dev/sanity/admin-profile
+Authorization: Bearer {{adminToken}}
+
+### 12.2 Generate webhook payload đã ký
+POST {{baseUrl}}/api/v1/dev/payos/webhook-simulator/generate
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "orderCode": 260417034039106,
+  "amount": 280000000,
+  "status": "PAID",
+  "paymentLinkId": "8ed4922ccc074d579e97dfae1a3f08d3",
+  "id": "evt-dev-001"
+}
+
+### 12.3 Trigger webhook pipeline 1 phát (ký + chạy)
+POST {{baseUrl}}/api/v1/dev/payos/webhook-simulator/trigger
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "orderCode": 260417034039106,
+  "amount": 280000000,
+  "status": "PAID",
+  "paymentLinkId": "8ed4922ccc074d579e97dfae1a3f08d3",
+  "id": "evt-dev-trigger-001"
+}
+
+###

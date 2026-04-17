@@ -121,6 +121,19 @@ public class CheckoutServiceShippingTests
     {
         public Task<List<PromotionRule>> GetActiveRulesAsync(DateTime utcNow, CancellationToken cancellationToken)
             => Task.FromResult(new List<PromotionRule>());
+
+        public Task<DTOs.Common.PagedResult<DTOs.Promotion.PromotionRuleDto>> SearchAsync(
+            bool? isActive, int page, int pageSize, CancellationToken cancellationToken)
+            => Task.FromResult(new DTOs.Common.PagedResult<DTOs.Promotion.PromotionRuleDto>
+            {
+                Items = new List<DTOs.Promotion.PromotionRuleDto>(),
+                TotalCount = 0,
+                PageNumber = page,
+                PageSize = pageSize
+            });
+
+        public Task<DTOs.Promotion.PromotionRuleDetailDto?> GetDetailByIdAsync(Guid id, CancellationToken cancellationToken)
+            => Task.FromResult<DTOs.Promotion.PromotionRuleDetailDto?>(null);
     }
 
     private sealed class FakeCurrentUserService : ICurrentUserService
