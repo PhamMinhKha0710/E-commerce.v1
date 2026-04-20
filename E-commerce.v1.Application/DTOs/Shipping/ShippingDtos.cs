@@ -60,3 +60,12 @@ public class CreateShipmentResponse
     public string Status { get; set; } = string.Empty;
     public string? SharedLink { get; set; }
 }
+
+public class SyncShipmentStatusResponse
+{
+    public string AhamoveOrderId { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string? SharedLink { get; set; }
+    public string DomainStatus { get; set; } = string.Empty;
+    public string RawAhamoveStatus { get; set; } = string.Empty;
+}

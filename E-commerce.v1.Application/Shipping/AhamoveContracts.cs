@@ -108,3 +108,13 @@ public class AhamoveCreateOrderResponse
     public string Status { get; set; } = string.Empty;
     public string? SharedLink { get; set; }
 }
+
+public class AhamoveOrderDetailsResponse
+{
+    [JsonPropertyName("_id")]
+    public string OrderId { get; set; } = string.Empty;
+
+    public string Status { get; set; } = string.Empty;
+
+    public string? SharedLink { get; set; }
+}

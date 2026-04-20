@@ -10,8 +10,8 @@ public class CreateShipmentCommandValidator : AbstractValidator<CreateShipmentCo
         RuleFor(x => x.OrderId).NotEmpty();
         RuleFor(x => x.Body).NotNull();
         RuleFor(x => x.Body.Path.Count)
-            .GreaterThanOrEqualTo(2)
-            .WithMessage("Cần ít nhất 2 điểm trên lộ trình (lấy hàng và giao hàng).");
+            .GreaterThanOrEqualTo(1)
+            .WithMessage("Cần ít nhất 1 điểm giao hàng.");
         RuleFor(x => x.Body.ServiceId)
             .NotEmpty()
             .WithMessage("serviceId là bắt buộc.");

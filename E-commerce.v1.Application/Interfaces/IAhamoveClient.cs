@@ -11,4 +11,8 @@ public interface IAhamoveClient
     Task<AhamoveCreateOrderResponse> CreateOrderAsync(
         AhamoveCreateOrderRequest request,
         CancellationToken cancellationToken = default);
+
+    Task<AhamoveOrderDetailsResponse> GetOrderDetailsAsync(
+        string orderId,
+        CancellationToken cancellationToken = default);
 }
