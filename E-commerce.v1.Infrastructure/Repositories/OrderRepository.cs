@@ -29,6 +29,13 @@ public class OrderRepository : IOrderRepository
             .FirstOrDefaultAsync(o => o.AhamoveOrderId == ahamoveOrderId, cancellationToken);
     }
 
+    public Task<Order?> GetOrderByPayosOrderCodeAsync(long orderCode, CancellationToken cancellationToken)
+    {
+        return _context.Orders
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.PayosOrderCode == orderCode, cancellationToken);
+    }
+
     public async Task<(List<Order> Items, int Total)> GetMyOrdersAsync(
         Guid userId,
         int skip,

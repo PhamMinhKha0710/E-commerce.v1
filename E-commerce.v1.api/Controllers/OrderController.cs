@@ -1,5 +1,6 @@
 using E_commerce.v1.Application.DTOs.Order;
 using E_commerce.v1.Application.DTOs.Shipping;
+using E_commerce.v1.Application.Features.Order.Commands.CancelOrder;
 using E_commerce.v1.Application.Features.Order.Queries.GetMyOrders;
 using E_commerce.v1.Application.Features.Order.Queries.GetOrderById;
 using E_commerce.v1.Application.Features.Shipping.Commands.CreateShipment;
@@ -38,11 +39,30 @@ public class OrderController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPost("{orderId:guid}/create-shipment")]
+    /// <summary>Tạo shipment cho đơn hàng.</summary>
+    [HttpPost("{orderId:guid}/shipment")]
     public async Task<ActionResult<CreateShipmentResponse>> CreateShipment(Guid orderId, [FromBody] CreateShipmentRequest body)
+        => await CreateShipmentInternal(orderId, body);
+
+    /// <summary>Tạo shipment cho đơn hàng (deprecated, dùng POST api/v1/orders/{id}/shipment).</summary>
+    [HttpPost("{orderId:guid}/create-shipment")]
+    [Obsolete("Use POST api/v1/orders/{orderId}/shipment instead.")]
+    public async Task<ActionResult<CreateShipmentResponse>> CreateShipmentLegacy(Guid orderId, [FromBody] CreateShipmentRequest body)
+        => await CreateShipmentInternal(orderId, body);
+
+    private async Task<ActionResult<CreateShipmentResponse>> CreateShipmentInternal(Guid orderId, CreateShipmentRequest body)
     {
         var userId = User.GetRequiredUserId();
         var result = await _mediator.Send(new CreateShipmentCommand(userId, orderId, body));
         return Ok(result);
+    }
+
+    /// <summary>Huỷ đơn hàng (chỉ owner, khi đơn còn ở Pending/Confirmed và chưa thanh toán).</summary>
+    [HttpPost("{id:guid}/cancel")]
+    public async Task<IActionResult> CancelOrder(Guid id)
+    {
+        var userId = User.GetRequiredUserId();
+        await _mediator.Send(new CancelOrderCommand(userId, id));
+        return NoContent();
     }
 }

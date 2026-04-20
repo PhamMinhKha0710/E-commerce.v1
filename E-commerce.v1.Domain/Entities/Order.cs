@@ -24,6 +24,11 @@ public class Order : BaseEntity
 
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
     public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.Cod;
+    public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
+    public DateTime? PaidAt { get; set; }
+
+    public string? PayosPaymentLinkId { get; set; }
+    public long? PayosOrderCode { get; set; }
 
     /// <summary>Ahamove order id after create-shipment succeeds.</summary>
     public string? AhamoveOrderId { get; set; }

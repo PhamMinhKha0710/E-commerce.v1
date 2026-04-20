@@ -8,6 +8,8 @@ public interface IOrderRepository
 
     Task<Order?> GetOrderByAhamoveOrderIdAsync(string ahamoveOrderId, CancellationToken cancellationToken);
 
+    Task<Order?> GetOrderByPayosOrderCodeAsync(long orderCode, CancellationToken cancellationToken);
+
     Task<(List<Order> Items, int Total)> GetMyOrdersAsync(
         Guid userId,
         int skip,

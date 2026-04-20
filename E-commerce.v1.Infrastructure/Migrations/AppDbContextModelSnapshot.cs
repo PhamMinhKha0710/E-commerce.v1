@@ -304,8 +304,21 @@ namespace E_commerce.v1.Infrastructure.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
 
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("PaymentMethod")
                         .HasColumnType("int");
+
+                    b.Property<int>("PaymentStatus")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("PayosOrderCode")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("PayosPaymentLinkId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<decimal>("PromotionDiscount")
                         .HasColumnType("decimal(18,2)");
@@ -376,6 +389,12 @@ namespace E_commerce.v1.Infrastructure.Migrations
                     b.HasIndex("OrderNumber")
                         .IsUnique();
 
+                    b.HasIndex("PayosOrderCode")
+                        .HasFilter("[PayosOrderCode] IS NOT NULL");
+
+                    b.HasIndex("PayosPaymentLinkId")
+                        .HasFilter("[PayosPaymentLinkId] IS NOT NULL");
+
                     b.HasIndex("PromotionRuleId");
 
                     b.HasIndex("UserId");
@@ -431,6 +450,71 @@ namespace E_commerce.v1.Infrastructure.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("OrderItems", (string)null);
+                });
+
+            modelBuilder.Entity("E_commerce.v1.Domain.Entities.PaymentTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("nvarchar(8)");
+
+                    b.Property<DateTime?>("LastEventAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastEventIdempotencyKey")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Provider")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("ProviderOrderCode")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ProviderPaymentLinkId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("RawLastWebhookPayload")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("Provider", "ProviderOrderCode")
+                        .HasFilter("[ProviderOrderCode] IS NOT NULL");
+
+                    b.HasIndex("Provider", "ProviderPaymentLinkId")
+                        .HasFilter("[ProviderPaymentLinkId] IS NOT NULL");
+
+                    b.ToTable("PaymentTransactions", (string)null);
                 });
 
             modelBuilder.Entity("E_commerce.v1.Domain.Entities.Product", b =>
@@ -804,6 +888,54 @@ namespace E_commerce.v1.Infrastructure.Migrations
                     b.ToTable("Roles");
                 });
 
+            modelBuilder.Entity("E_commerce.v1.Domain.Entities.StockReservation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ConvertedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ReleasedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId", "Status");
+
+                    b.HasIndex("ProductId", "Status", "ExpiresAt");
+
+                    b.ToTable("StockReservations", (string)null);
+                });
+
             modelBuilder.Entity("E_commerce.v1.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -989,6 +1121,17 @@ namespace E_commerce.v1.Infrastructure.Migrations
                     b.Navigation("Order");
                 });
 
+            modelBuilder.Entity("E_commerce.v1.Domain.Entities.PaymentTransaction", b =>
+                {
+                    b.HasOne("E_commerce.v1.Domain.Entities.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+                });
+
             modelBuilder.Entity("E_commerce.v1.Domain.Entities.Product", b =>
                 {
                     b.HasOne("E_commerce.v1.Domain.Entities.Category", "Category")
@@ -1127,6 +1270,25 @@ namespace E_commerce.v1.Infrastructure.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("E_commerce.v1.Domain.Entities.StockReservation", b =>
+                {
+                    b.HasOne("E_commerce.v1.Domain.Entities.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("E_commerce.v1.Domain.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("E_commerce.v1.Domain.Entities.UserRole", b =>

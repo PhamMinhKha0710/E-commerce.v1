@@ -135,7 +135,8 @@ public class CheckoutService : ICheckoutService
             if (product.Stock < item.Quantity)
                 throw new BadRequestException($"Sản phẩm '{product.Name}' không đủ tồn kho.");
 
-            product.Stock -= item.Quantity;
+            if (paymentMethod == PaymentMethod.Cod)
+                product.Stock -= item.Quantity;
         }
 
         var now = DateTime.UtcNow;

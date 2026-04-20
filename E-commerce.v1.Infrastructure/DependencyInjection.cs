@@ -1,9 +1,11 @@
 using E_commerce.v1.Application.Interfaces;
+using E_commerce.v1.Application.Payments;
 using E_commerce.v1.Application.Shipping;
 using E_commerce.v1.Infrastructure.Data;
 using E_commerce.v1.Infrastructure.Repositories;
 using E_commerce.v1.Infrastructure.Security;
 using E_commerce.v1.Infrastructure.Shipping;
+using E_commerce.v1.Infrastructure.Payments;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -28,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<ICartReadRepository, CartReadRepository>();
         services.AddScoped<ICheckoutRepository, CheckoutRepository>();
         services.AddScoped<ICouponRepository, CouponRepository>();
+        services.AddScoped<ICouponReadRepository, CouponReadRepository>();
         services.AddScoped<IReviewRepository, ReviewRepository>();
         services.AddScoped<IReviewReadRepository, ReviewReadRepository>();
         services.AddScoped<IProductRepository, ProductRepository>();
@@ -40,10 +43,16 @@ public static class DependencyInjection
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IOrderReadRepository, OrderReadRepository>();
         services.AddScoped<IVariantRepository, VariantRepository>();
+        services.AddScoped<IVariantReadRepository, VariantReadRepository>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<IPaymentRepository, PaymentRepository>();
 
         services.Configure<AhamoveOptions>(configuration.GetSection(AhamoveOptions.SectionName));
         services.AddHttpClient<IAhamoveClient, AhamoveClient>();
+
+        services.Configure<PayosOptions>(configuration.GetSection(PayosOptions.SectionName));
+        services.AddSingleton<IPayosClient, PayosClient>();
+        services.AddSingleton<IPayosWebhookVerifier, PayosWebhookVerifier>();
 
         // Auth
         services.AddOptions<JwtOptions>().Bind(configuration.GetSection(JwtOptions.SectionName));

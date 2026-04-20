@@ -25,9 +25,7 @@ public class CartController : ControllerBase
         _mediator = mediator;
     }
 
-
-    /// Lấy giỏ hàng của user hiện tại
-
+    /// <summary>Lấy giỏ hàng của user hiện tại.</summary>
     [HttpGet]
     public async Task<ActionResult<CartDto>> GetCart()
     {
@@ -39,7 +37,6 @@ public class CartController : ControllerBase
 
     /// <summary>
     /// Đồng bộ giỏ guest (localStorage) vào DB sau khi đăng nhập.
-    /// Merge: mỗi sản phẩm quantity = số lượng trên DB + số lượng từ FE (không dùng giá từ client — giá lấy khi GET cart/checkout).
     /// </summary>
     [HttpPost("sync")]
     public async Task<ActionResult<CartDto>> SyncCart([FromBody] SyncCartRequest request)
@@ -49,12 +46,18 @@ public class CartController : ControllerBase
         return Ok(result);
     }
 
-    /// Thêm sản phẩm vào giỏ hàng
+    /// <summary>Thêm sản phẩm vào giỏ hàng (RESTful).</summary>
+    [HttpPost("items")]
+    public async Task<ActionResult<CartActionResponse>> AddToCartItems([FromBody] AddToCartCommandRequest request)
+        => await AddToCartInternal(request);
 
-    /// Kiểm tra sản phẩm có tồn tại và đảm bảo Inventory còn đủ hàng trong kho trước khi thêm vào giỏ hàng
-
+    /// <summary>Thêm sản phẩm vào giỏ hàng (deprecated, dùng POST api/v1/cart/items).</summary>
     [HttpPost("add")]
-    public async Task<ActionResult<Unit>> AddToCart([FromBody] AddToCartCommandRequest request)
+    [Obsolete("Use POST api/v1/cart/items instead.")]
+    public async Task<ActionResult<CartActionResponse>> AddToCart([FromBody] AddToCartCommandRequest request)
+        => await AddToCartInternal(request);
+
+    private async Task<ActionResult<CartActionResponse>> AddToCartInternal(AddToCartCommandRequest request)
     {
         var userId = User.GetRequiredUserId();
         var command = new AddToCartCommand
@@ -65,17 +68,12 @@ public class CartController : ControllerBase
         };
 
         await _mediator.Send(command);
-        return Ok(new { Message = "Sản phẩm đã được thêm vào giỏ hàng thành công." });
+        return Ok(new CartActionResponse("Sản phẩm đã được thêm vào giỏ hàng thành công."));
     }
 
-
-    /// Cập nhật số lượng sản phẩm trong giỏ hàng
-
-    /// Nếu Quantity = 0, sản phẩm sẽ được xóa khỏi giỏ hàng
-    /// Lấy ID người dùng từ Token JWT để truy xuất đúng giỏ hàng tương ứng
-    /// 
-    [HttpPut("items/{id}")]
-    public async Task<ActionResult<Unit>> UpdateCartItem(Guid id, [FromBody] UpdateCartItemRequest request)
+    /// <summary>Cập nhật số lượng sản phẩm trong giỏ hàng. Nếu Quantity = 0, dòng sẽ bị xóa.</summary>
+    [HttpPut("items/{id:guid}")]
+    public async Task<ActionResult<CartActionResponse>> UpdateCartItem(Guid id, [FromBody] UpdateCartItemRequest request)
     {
         var userId = User.GetRequiredUserId();
         var command = new UpdateCartItemCommand
@@ -86,10 +84,10 @@ public class CartController : ControllerBase
         };
 
         await _mediator.Send(command);
-        return Ok(new { Message = "Giỏ hàng đã được cập nhật thành công." });
+        return Ok(new CartActionResponse("Giỏ hàng đã được cập nhật thành công."));
     }
 
-    /// Xóa một dòng trong giỏ (RESTful, tương đương PUT quantity = 0).
+    /// <summary>Xóa một dòng trong giỏ (tương đương PUT quantity = 0).</summary>
     [HttpDelete("items/{id:guid}")]
     public async Task<IActionResult> RemoveCartItem(Guid id)
     {
@@ -98,7 +96,7 @@ public class CartController : ControllerBase
         return NoContent();
     }
 
-    /// Xóa toàn bộ giỏ (xóa bản ghi Cart; lần GET sau trả giỏ rỗng).
+    /// <summary>Xóa toàn bộ giỏ.</summary>
     [HttpDelete]
     public async Task<IActionResult> ClearCart()
     {
@@ -107,16 +105,36 @@ public class CartController : ControllerBase
         return NoContent();
     }
 
-    /// Checkout giỏ hàng hiện tại thành đơn hàng.
+    /// <summary>
+    /// Checkout giỏ hàng. Khi có <c>cartItemIds</c> thì checkout các item được chọn;
+    /// khi bỏ trống thì checkout toàn bộ giỏ hàng.
+    /// </summary>
     [HttpPost("checkout")]
     public async Task<ActionResult<CheckoutResponse>> Checkout([FromBody] CheckoutRequest request)
-    {
-        if (!Enum.IsDefined(typeof(PaymentMethod), request.PaymentMethod))
-            return BadRequest(new { Message = "PaymentMethod không hợp lệ." });
+        => await CheckoutInternal(request.CartItemIds, request.PaymentMethod, request.Shipping);
 
+    /// <summary>Checkout các item được chọn (deprecated, dùng POST api/v1/cart/checkout với cartItemIds).</summary>
+    [HttpPost("checkout-selected")]
+    [Obsolete("Use POST api/v1/cart/checkout with cartItemIds instead.")]
+    public async Task<ActionResult<CheckoutResponse>> CheckoutSelected([FromBody] CheckoutSelectedRequest request)
+        => await CheckoutInternal(request.CartItemIds, request.PaymentMethod, request.Shipping);
+
+    private async Task<ActionResult<CheckoutResponse>> CheckoutInternal(
+        List<Guid>? cartItemIds,
+        PaymentMethod paymentMethod,
+        CheckoutShippingInfo? shipping)
+    {
         var userId = User.GetRequiredUserId();
-        var result = await _mediator.Send(new CheckoutCommand(userId, (PaymentMethod)request.PaymentMethod, request.Shipping));
-        return CreatedAtAction(nameof(Checkout), new { id = result.OrderId }, result);
+
+        var result = cartItemIds is { Count: > 0 }
+            ? await _mediator.Send(new CheckoutSelectedCommand(userId, cartItemIds, paymentMethod, shipping))
+            : await _mediator.Send(new CheckoutCommand(userId, paymentMethod, shipping));
+
+        return CreatedAtAction(
+            actionName: nameof(OrderController.GetOrderById),
+            controllerName: "Order",
+            routeValues: new { id = result.OrderId },
+            value: result);
     }
 
     [HttpPost("apply-coupon")]
@@ -125,18 +143,6 @@ public class CartController : ControllerBase
         var userId = User.GetRequiredUserId();
         var result = await _mediator.Send(new ApplyCouponToCartCommand(userId, request.CouponCode));
         return Ok(result);
-    }
-
-    /// Checkout các item được chọn trong giỏ hàng thành 1 đơn hàng.
-    [HttpPost("checkout-selected")]
-    public async Task<ActionResult<CheckoutResponse>> CheckoutSelected([FromBody] CheckoutSelectedRequest request)
-    {
-        if (!Enum.IsDefined(typeof(PaymentMethod), request.PaymentMethod))
-            return BadRequest(new { Message = "PaymentMethod không hợp lệ." });
-
-        var userId = User.GetRequiredUserId();
-        var result = await _mediator.Send(new CheckoutSelectedCommand(userId, request.CartItemIds, (PaymentMethod)request.PaymentMethod, request.Shipping));
-        return CreatedAtAction(nameof(CheckoutSelected), new { id = result.OrderId }, result);
     }
 }
 
@@ -153,14 +159,17 @@ public class UpdateCartItemRequest
 
 public class CheckoutRequest
 {
-    public int PaymentMethod { get; set; }
+    public PaymentMethod PaymentMethod { get; set; }
     public CheckoutShippingInfo? Shipping { get; set; }
+
+    /// <summary>Khi có giá trị, chỉ checkout các cart item được chọn; bỏ trống = checkout toàn bộ giỏ.</summary>
+    public List<Guid>? CartItemIds { get; set; }
 }
 
 public class CheckoutSelectedRequest
 {
     public List<Guid> CartItemIds { get; set; } = new();
-    public int PaymentMethod { get; set; }
+    public PaymentMethod PaymentMethod { get; set; }
     public CheckoutShippingInfo? Shipping { get; set; }
 }
 
@@ -168,3 +177,5 @@ public class ApplyCouponRequest
 {
     public string CouponCode { get; set; } = string.Empty;
 }
+
+public sealed record CartActionResponse(string Message);

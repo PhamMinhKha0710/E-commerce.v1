@@ -45,6 +45,13 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
 
         builder.Property(x => x.AhamoveLastStatus).HasMaxLength(64);
 
+        builder.Property(x => x.PayosPaymentLinkId).HasMaxLength(128);
+        builder.HasIndex(x => x.PayosPaymentLinkId).HasFilter("[PayosPaymentLinkId] IS NOT NULL");
+
+        builder.Property(x => x.PaidAt).HasColumnType("datetime2");
+        builder.Property(x => x.PayosOrderCode).HasColumnType("bigint");
+        builder.HasIndex(x => x.PayosOrderCode).HasFilter("[PayosOrderCode] IS NOT NULL");
+
         builder.Property(x => x.ShippingReceiverName).HasMaxLength(128);
         builder.Property(x => x.ShippingReceiverPhone).HasMaxLength(32);
         builder.Property(x => x.ShippingAddressLine).HasMaxLength(512);
