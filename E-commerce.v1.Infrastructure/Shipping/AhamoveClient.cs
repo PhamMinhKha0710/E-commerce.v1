@@ -87,6 +87,18 @@ public class AhamoveClient : IAhamoveClient
         };
     }
 
+    public async Task<AhamoveOrderDetailsResponse> GetOrderDetailsAsync(
+        string orderId,
+        CancellationToken cancellationToken = default)
+    {
+        using var response = await _http.GetAsync($"v3/orders/{orderId}", cancellationToken);
+        await EnsureSuccessOrThrowAsync(response, cancellationToken);
+
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        var result = await JsonSerializer.DeserializeAsync<AhamoveOrderDetailsResponse>(stream, _jsonRead, cancellationToken);
+        return result ?? new AhamoveOrderDetailsResponse();
+    }
+
     private static async Task EnsureSuccessOrThrowAsync(HttpResponseMessage response, CancellationToken cancellationToken)
     {
         if (response.IsSuccessStatusCode)

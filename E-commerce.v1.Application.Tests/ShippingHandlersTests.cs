@@ -312,11 +312,22 @@ public class ShippingHandlersTests
             return Task.FromResult(EstimateResult);
         }
 
-        public Task<AhamoveCreateOrderResponse> CreateOrderAsync(
-            AhamoveCreateOrderRequest request,
-            CancellationToken cancellationToken = default)
+        public Task<AhamoveCreateOrderResponse> CreateOrderAsync(AhamoveCreateOrderRequest request, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(CreateResult);
+            return Task.FromResult(new AhamoveCreateOrderResponse
+            {
+                OrderId = "AHM-MOCK-123",
+                Status = "ASSIGNING"
+            });
+        }
+
+        public Task<AhamoveOrderDetailsResponse> GetOrderDetailsAsync(string orderId, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(new AhamoveOrderDetailsResponse
+            {
+                OrderId = orderId,
+                Status = "DELIVERING"
+            });
         }
     }
 }
