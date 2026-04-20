@@ -12,15 +12,18 @@ public class CreateShipmentCommandHandler : IRequestHandler<CreateShipmentComman
     private readonly IOrderRepository _orderRepository;
     private readonly IAhamoveClient _ahamoveClient;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly AhamoveOptions _options;
 
     public CreateShipmentCommandHandler(
         IOrderRepository orderRepository,
         IAhamoveClient ahamoveClient,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        Microsoft.Extensions.Options.IOptions<AhamoveOptions> options)
     {
         _orderRepository = orderRepository;
         _ahamoveClient = ahamoveClient;
         _unitOfWork = unitOfWork;
+        _options = options.Value;
     }
 
     public async Task<CreateShipmentResponse> Handle(CreateShipmentCommand request, CancellationToken cancellationToken)
@@ -46,6 +49,20 @@ public class CreateShipmentCommandHandler : IRequestHandler<CreateShipmentComman
                 Cod = p.Cod
             })
             .ToList();
+
+        // Tự động thêm điểm pickup nếu chỉ có 1 điểm (delivery)
+        if (path.Count == 1)
+        {
+            var p = _options.Pickup;
+            path.Insert(0, new AhamovePathPoint
+            {
+                Lat = p.Lat,
+                Lng = p.Lng,
+                Address = p.Address,
+                Name = p.Name,
+                Mobile = p.Mobile
+            });
+        }
 
         if (order.PaymentMethod == PaymentMethod.Cod && path.Count >= 2)
             path[^1].Cod = order.GrandTotal;
