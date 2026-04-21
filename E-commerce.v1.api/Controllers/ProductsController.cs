@@ -41,8 +41,7 @@ public class ProductsController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>Liệt kê review của một sản phẩm.</summary>
-    /// <param name="page">[DEPRECATED] Dùng <c>pageNumber</c> thay cho <c>page</c>.</param>
+    /// <param name="page">[Deprecated] Query cũ, client mới dùng <c>pageNumber</c>.</param>
     [HttpGet("{id:guid}/reviews")]
     public async Task<ActionResult<ProductReviewsSummaryDto>> GetProductReviews(
         Guid id,
@@ -55,7 +54,6 @@ public class ProductsController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>Đăng review cho một sản phẩm (nested, chuẩn REST).</summary>
     [HttpPost("{id:guid}/reviews")]
     [Authorize]
     public async Task<ActionResult<Guid>> PostProductReview(Guid id, [FromBody] PostProductReviewRequest request)
@@ -71,7 +69,7 @@ public class ProductsController : ControllerBase
         return Ok(reviewId);
     }
 
-    /// <summary>Tạo sản phẩm (deprecated, dùng POST api/v1/admin/products).</summary>
+    /// <summary>[Deprecated] Dùng <c>POST api/v1/admin/products</c>.</summary>
     [HttpPost]
     [Authorize(Roles = "Admin")]
     [Obsolete("Use POST api/v1/admin/products instead.")]
@@ -81,7 +79,7 @@ public class ProductsController : ControllerBase
         return CreatedAtAction(nameof(GetProductById), new { id = productId }, productId);
     }
 
-    /// <summary>Cập nhật sản phẩm (deprecated, dùng PUT api/v1/admin/products/{id}).</summary>
+    /// <summary>[Deprecated] Dùng <c>PUT api/v1/admin/products/{id}</c>.</summary>
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin")]
     [Obsolete("Use PUT api/v1/admin/products/{id} instead.")]
@@ -91,7 +89,7 @@ public class ProductsController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>Xóa sản phẩm (deprecated, dùng DELETE api/v1/admin/products/{id}).</summary>
+    /// <summary>[Deprecated] Dùng <c>DELETE api/v1/admin/products/{id}</c>.</summary>
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
     [Obsolete("Use DELETE api/v1/admin/products/{id} instead.")]

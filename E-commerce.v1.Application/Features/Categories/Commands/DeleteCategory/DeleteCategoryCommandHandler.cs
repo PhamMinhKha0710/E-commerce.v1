@@ -21,7 +21,8 @@ public class DeleteCategoryCommandHandler : IRequestHandler<DeleteCategoryComman
         if (category == null)
             throw new NotFoundException("Không tìm thấy danh mục cần xoá.");
 
-        // Soft delete: giữ dữ liệu, ẩn khỏi query filter.
+        // Soft-delete để giữ lịch sử/quan hệ tham chiếu (không hard-delete).
+        // Category sẽ bị ẩn khỏi query mặc định và không còn active để hiển thị storefront.
         category.IsDeleted = true;
         category.IsActive = false;
 

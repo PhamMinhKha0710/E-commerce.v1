@@ -6,11 +6,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace E_commerce.v1.Infrastructure.Repositories;
 
-/// <summary>
-/// Decorator caching active promotion rules to reduce DB load on hot paths
-/// (e.g. GET /api/v1/cart). TTL is intentionally short so rule changes
-/// propagate within ~1 minute without requiring explicit invalidation.
-/// </summary>
+/// <summary>Cache promotion rules active (TTL ~60s) để giảm load DB trên hot path.</summary>
 public class CachedPromotionRuleReadRepository : IPromotionRuleReadRepository
 {
     private const string ActiveRulesCacheKey = "promotion_rules:active";
@@ -32,9 +28,6 @@ public class CachedPromotionRuleReadRepository : IPromotionRuleReadRepository
             return FilterByTime(cached, utcNow);
         }
 
-        // Load a superset (all currently active) and cache it. Time-window
-        // filtering is applied per call so a single cache entry serves slightly
-        // different utcNow values within the TTL window.
         var rules = await _inner.GetActiveRulesAsync(utcNow, cancellationToken);
 
         _cache.Set(ActiveRulesCacheKey, rules, new MemoryCacheEntryOptions

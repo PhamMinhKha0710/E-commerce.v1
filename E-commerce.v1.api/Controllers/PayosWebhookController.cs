@@ -18,17 +18,18 @@ public class PayosWebhookController : ControllerBase
         _mediator = mediator;
     }
 
-    /// <summary>Webhook từ PayOS (route chính, nhất quán với /api/v1/webhooks/{provider}).</summary>
+    /// <summary>Webhook callback từ PayOS.</summary>
     [HttpPost("/api/v1/webhooks/payos")]
     public Task<IActionResult> PostNew([FromBody] JsonElement payload) => PostInternal(payload);
 
-    /// <summary>Webhook từ PayOS (deprecated, dùng /api/v1/webhooks/payos).</summary>
+    /// <summary>[Deprecated] Dùng <c>POST /api/v1/webhooks/payos</c>.</summary>
     [HttpPost("/api/v1/payment/payos/webhook")]
     [Obsolete("Use POST /api/v1/webhooks/payos instead.")]
     public Task<IActionResult> Post([FromBody] JsonElement payload) => PostInternal(payload);
 
     private async Task<IActionResult> PostInternal(JsonElement payload)
     {
+        // Cần raw JSON để verify signature; tránh re-serialize làm sai hash.
         var raw = payload.ValueKind == JsonValueKind.Undefined ? string.Empty : payload.GetRawText();
         if (string.IsNullOrWhiteSpace(raw))
         {

@@ -18,12 +18,11 @@ public class PayosPaymentController : ControllerBase
         _mediator = mediator;
     }
 
-    /// <summary>Tạo PayOS payment link cho một đơn hàng.</summary>
     [HttpPost]
     public async Task<ActionResult<CreatePayosPaymentLinkResponse>> Create([FromBody] CreatePayosPaymentLinkRequest request)
         => await CreateInternal(request);
 
-    /// <summary>Tạo PayOS payment link (deprecated, dùng POST api/v1/payment/payos).</summary>
+    /// <summary>[Deprecated] Dùng <c>POST api/v1/payment/payos</c>.</summary>
     [HttpPost("create")]
     [Obsolete("Use POST api/v1/payment/payos instead.")]
     public async Task<ActionResult<CreatePayosPaymentLinkResponse>> CreateLegacy([FromBody] CreatePayosPaymentLinkRequest request)

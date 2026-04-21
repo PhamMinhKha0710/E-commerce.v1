@@ -11,7 +11,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace E_commerce.v1.api.Controllers;
 
 /// <summary>
-/// Admin-only CRUD cho danh mục sản phẩm. GET công khai ở <c>api/v1/categories</c>.
+/// CRUD danh mục dành riêng cho Admin. Endpoint GET công khai (cho khách duyệt
+/// danh mục ở storefront) đặt tại <c>api/v1/categories</c> — tách controller để
+/// áp dụng policy <c>Authorize(Roles = "Admin")</c> ở cấp class.
 /// </summary>
 [ApiController]
 [Route("api/v1/admin/categories")]

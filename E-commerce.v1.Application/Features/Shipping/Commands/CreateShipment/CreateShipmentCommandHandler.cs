@@ -55,7 +55,7 @@ public class CreateShipmentCommandHandler : IRequestHandler<CreateShipmentComman
             })
             .ToList();
 
-        // Tự động thêm điểm pickup nếu chỉ có 1 điểm (delivery)
+        // FE có thể chỉ gửi điểm dropoff; server tự prepend pickup cấu hình sẵn để tạo path hợp lệ.
         if (path.Count == 1)
         {
             var p = _options.Pickup;

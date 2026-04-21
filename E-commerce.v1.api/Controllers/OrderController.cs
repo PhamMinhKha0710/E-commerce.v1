@@ -42,12 +42,11 @@ public class OrderController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>Tạo shipment cho đơn hàng.</summary>
     [HttpPost("{orderId:guid}/shipment")]
     public async Task<ActionResult<CreateShipmentResponse>> CreateShipment(Guid orderId, [FromBody] CreateShipmentRequest body)
         => await CreateShipmentInternal(orderId, body);
 
-    /// <summary>Tạo shipment cho đơn hàng (deprecated, dùng POST api/v1/orders/{id}/shipment).</summary>
+    /// <summary>[Deprecated] Dùng <c>POST api/v1/orders/{orderId}/shipment</c>.</summary>
     [HttpPost("{orderId:guid}/create-shipment")]
     [Obsolete("Use POST api/v1/orders/{orderId}/shipment instead.")]
     public async Task<ActionResult<CreateShipmentResponse>> CreateShipmentLegacy(Guid orderId, [FromBody] CreateShipmentRequest body)
@@ -60,7 +59,10 @@ public class OrderController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>Huỷ đơn hàng (chỉ owner, khi đơn còn ở Pending/Confirmed và chưa thanh toán).</summary>
+    /// <summary>
+    /// Huỷ đơn: chỉ owner mới được huỷ, và chỉ cho phép khi đơn ở trạng thái
+    /// Pending/Confirmed và chưa có payment thành công (business rule).
+    /// </summary>
     [HttpPost("{id:guid}/cancel")]
     public async Task<IActionResult> CancelOrder(Guid id)
     {

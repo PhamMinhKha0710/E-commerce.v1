@@ -54,7 +54,6 @@ public class CreatePayosPaymentLinkCommandHandler : IRequestHandler<CreatePayosP
 
         if (!string.IsNullOrWhiteSpace(order.PayosPaymentLinkId))
         {
-            // If a link already exists, return it as-is (client can decide to reuse).
             _logger.LogInformation("PayOS payment link already exists. OrderId={OrderId}", order.Id);
             return new CreatePayosPaymentLinkResponse
             {
@@ -71,7 +70,6 @@ public class CreatePayosPaymentLinkCommandHandler : IRequestHandler<CreatePayosP
             : GenerateOrderCode(now, order.Id);
         order.PayosOrderCode = orderCode;
 
-        // 1) Reserve stock & persist reservation rows (Serializable transaction).
         await _unitOfWork.ExecuteInTransactionAsync(async ct =>
         {
             await _paymentRepository.ReserveStockForOrderAsync(
@@ -82,7 +80,6 @@ public class CreatePayosPaymentLinkCommandHandler : IRequestHandler<CreatePayosP
             await _unitOfWork.SaveChangesAsync(ct);
         }, IsolationLevel.Serializable, cancellationToken);
 
-        // 2) Create PayOS payment link.
         PayosCreatePaymentLinkResult payosResult;
         try
         {
@@ -100,7 +97,6 @@ public class CreatePayosPaymentLinkCommandHandler : IRequestHandler<CreatePayosP
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to create PayOS payment link. OrderId={OrderId}", order.Id);
-            // Compensate: release reservation & restore stock if PayOS call fails.
             await ReleaseReservationsAndRestoreStockAsync(order.Id, now, cancellationToken);
             throw;
         }
@@ -111,7 +107,6 @@ public class CreatePayosPaymentLinkCommandHandler : IRequestHandler<CreatePayosP
             throw new BadRequestException("Không tạo được link thanh toán PayOS.");
         }
 
-        // 3) Persist payment transaction + link identifiers.
         await _unitOfWork.ExecuteInTransactionAsync(async ct =>
         {
             var o = await _orderRepository.GetOrderByIdAsync(order.Id, ct);
@@ -147,10 +142,7 @@ public class CreatePayosPaymentLinkCommandHandler : IRequestHandler<CreatePayosP
 
     private static long GenerateOrderCode(DateTime utcNow, Guid orderId)
     {
-        // PayOS SDK enforces JS "max safe integer" limit (<= 9,007,199,254,740,991).
-        // Keep it well below that while retaining time ordering + low collision risk.
-        //
-        // 10-digit timePart (yyMMddHHmm) * 100000 + 5-digit suffix => up to ~ 9.9e14.
+        // PayOS giới hạn orderCode theo JS "max safe integer" (<= 9,007,199,254,740,991).
         var timePart = long.Parse(utcNow.ToString("yyMMddHHmm"));
         var suffix = (long)(Math.Abs(orderId.GetHashCode()) % 100000);
         return (timePart * 100000L) + suffix;
@@ -162,7 +154,6 @@ public class CreatePayosPaymentLinkCommandHandler : IRequestHandler<CreatePayosP
         {
             await _paymentRepository.ReleaseReservedStockAsync(orderId, nowUtc, ct);
 
-            // Best-effort: mark order payment as cancelled/failed to prevent loops.
             var order = await _orderRepository.GetOrderByIdAsync(orderId, ct);
             if (order != null && order.PaymentStatus == PaymentStatus.Pending)
                 order.PaymentStatus = PaymentStatus.Cancelled;

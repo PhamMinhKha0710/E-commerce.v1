@@ -64,7 +64,7 @@ public class ProcessPayosWebhookCommandHandler : IRequestHandler<ProcessPayosWeb
             if (IsTerminal(o.PaymentStatus))
                 return;
 
-            // Amount validation (best-effort).
+            // Nếu PayOS có gửi Amount thì phải khớp order total; mismatch thì bỏ qua.
             var expected = (int)decimal.Round(o.GrandTotal, 0, MidpointRounding.AwayFromZero);
             if (evt.Amount > 0 && evt.Amount != expected)
                 return;
@@ -99,7 +99,6 @@ public class ProcessPayosWebhookCommandHandler : IRequestHandler<ProcessPayosWeb
             await _unitOfWork.SaveChangesAsync(ct);
         }, IsolationLevel.Serializable, cancellationToken);
 
-        // Outside transaction: try to auto-create shipment if paid.
         if (newStatus.Value == PaymentStatus.Paid)
         {
             await TryAutoCreateShipmentAsync(order.Id, cancellationToken);

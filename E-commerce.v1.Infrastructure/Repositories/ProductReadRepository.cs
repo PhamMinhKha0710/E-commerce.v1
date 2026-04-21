@@ -43,8 +43,7 @@ public class ProductReadRepository : IProductReadRepository
 
         var total = await query.CountAsync(cancellationToken);
 
-        // Step 1: fetch the page without correlated variant aggregates to avoid
-        // expensive per-row subqueries (Count/Min/Max) on the Products listing.
+        // Tối ưu listing: tránh aggregate variant (Count/Min/Max) dạng per-row subquery.
         var items = await query
             .OrderByDescending(p => p.CreatedAt)
             .Skip(skip)
@@ -66,7 +65,6 @@ public class ProductReadRepository : IProductReadRepository
             })
             .ToListAsync(cancellationToken);
 
-        // Step 2: batch-load variant aggregates for just the current page.
         if (items.Count > 0)
         {
             var productIds = items.Select(i => i.Id).ToList();

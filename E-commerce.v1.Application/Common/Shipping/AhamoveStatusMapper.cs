@@ -4,7 +4,7 @@ namespace E_commerce.v1.Application.Common.Shipping;
 
 public static class AhamoveStatusMapper
 {
-    /// <summary>Maps Ahamove order status string to domain order status when applicable.</summary>
+    /// <summary>Map status string từ Ahamove → <see cref="OrderStatus"/> (chỉ map các status đã quy ước).</summary>
     public static OrderStatus? TryMapToOrderStatus(string? ahamoveStatus)
     {
         if (string.IsNullOrWhiteSpace(ahamoveStatus))

@@ -15,16 +15,14 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        // Tự động tìm và quét FluentValidation quy tắc
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
-        
-        // Cài đặt MediatR và nhúng Pipeline Validation tự động vào.
-        services.AddMediatR(cfg => {
+
+        services.AddMediatR(cfg =>
+        {
             cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
             cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
         });
-        
-        // Register Domain/Application Services
+
         services.AddScoped<IProductSlugService, ProductSlugService>();
         services.AddScoped<ICategorySlugService, CategorySlugService>();
         services.AddScoped<ICouponCalculationService, CouponCalculationService>();
@@ -33,7 +31,7 @@ public static class DependencyInjection
         services.AddScoped<ICheckoutService, CheckoutService>();
         services.AddScoped<ICartService, CartService>();
         services.AddScoped<IReviewService, ReviewService>();
-        
+
         return services;
     }
 }

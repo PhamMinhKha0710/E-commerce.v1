@@ -4,11 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace E_commerce.v1.Infrastructure.Data;
 
-/// <summary>
-/// Logs EF Core DbCommand execution durations, warning on slow queries so we
-/// can validate performance improvements in dev/staging without opening a
-/// full APM tool.
-/// </summary>
+/// <summary>Log cảnh báo khi query EF Core chạy chậm (dev/staging).</summary>
 public class SlowQueryLoggingInterceptor : DbCommandInterceptor
 {
     private static readonly TimeSpan SlowThreshold = TimeSpan.FromMilliseconds(300);

@@ -59,7 +59,6 @@ public static class DependencyInjection
         services.AddSingleton<IPayosClient, PayosClient>();
         services.AddSingleton<IPayosWebhookVerifier, PayosWebhookVerifier>();
 
-        // Auth
         services.AddOptions<JwtOptions>().Bind(configuration.GetSection(JwtOptions.SectionName));
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         services.AddScoped<IJwtProvider, JwtProvider>();

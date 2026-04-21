@@ -35,6 +35,7 @@ public class ProcessAhamoveWebhookCommandHandler : IRequestHandler<ProcessAhamov
 
         if (!string.IsNullOrEmpty(_options.WebhookApiKey))
         {
+            // Nếu Ahamove có gửi kèm api_key thì verify để chặn callback giả mạo.
             if (!root.TryGetProperty("api_key", out var keyEl) || keyEl.GetString() != _options.WebhookApiKey)
             {
                 _logger.LogWarning("Invalid Ahamove webhook api_key.");

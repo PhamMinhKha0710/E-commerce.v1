@@ -8,8 +8,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace E_commerce.v1.api.Controllers;
 
 /// <summary>
-/// Admin-only CRUD for products. GET endpoints (list/detail/reviews) remain public
-/// under <c>api/v1/products</c>.
+/// CRUD sản phẩm dành riêng cho Admin. Các GET (list/detail/reviews) vẫn public ở
+/// <c>api/v1/products</c> để storefront truy cập — tách controller để áp dụng
+/// <c>Authorize(Roles = "Admin")</c> ở cấp class thay vì annotate từng action.
 /// </summary>
 [ApiController]
 [Route("api/v1/admin/products")]

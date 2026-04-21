@@ -18,7 +18,7 @@ public class ReviewsController : ControllerBase
         _mediator = mediator;
     }
 
-    /// <summary>Đăng review (deprecated, dùng POST api/v1/products/{productId}/reviews).</summary>
+    /// <summary>[Deprecated] Dùng <c>POST api/v1/products/{productId}/reviews</c>.</summary>
     [HttpPost]
     [Obsolete("Use POST api/v1/products/{productId}/reviews instead.")]
     public async Task<ActionResult<Guid>> PostReview([FromBody] PostReviewCommand command)

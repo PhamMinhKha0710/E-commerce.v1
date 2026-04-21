@@ -4,16 +4,16 @@ public class AhamoveOptions
 {
     public const string SectionName = "Ahamove";
 
-    /// <summary>Base URL without trailing slash, e.g. https://partner-apistg.ahamove.com</summary>
+    /// <summary>Base URL (không có dấu <c>/</c> cuối), ví dụ <c>https://partner-apistg.ahamove.com</c>.</summary>
     public string BaseUrl { get; set; } = string.Empty;
 
-    /// <summary>Partner JWT (preferred when set).</summary>
+    /// <summary>Partner JWT (ưu tiên dùng nếu có).</summary>
     public string? BearerToken { get; set; }
 
-    /// <summary>Alternative to Bearer; sent as apikey header when BearerToken is empty.</summary>
+    /// <summary>Phương án thay thế Bearer; gửi header <c>apikey</c> khi <c>BearerToken</c> rỗng.</summary>
     public string? ApiKey { get; set; }
 
-    /// <summary>Expected api_key in webhook payload (staging sample includes this field).</summary>
+    /// <summary><c>api_key</c> mong đợi trong webhook payload (nếu Ahamove có gửi field này).</summary>
     public string? WebhookApiKey { get; set; }
 
     public int TimeoutSeconds { get; set; } = 60;

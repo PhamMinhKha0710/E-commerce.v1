@@ -13,7 +13,8 @@ public interface ICategoryRepository
     Task<bool> ExistsByIdAsync(Guid id, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Kiểm tra slug đã tồn tại trong DB (bao gồm cả hàng đã soft-delete) vì unique index ở DB không bỏ qua soft-deleted rows.
+    /// Kiểm tra slug đã tồn tại (kể cả row soft-delete) vì unique index ở DB
+    /// vẫn áp dụng cho các row đã xoá mềm.
     /// </summary>
     Task<bool> SlugExistsAsync(string slug, Guid? excludeId, CancellationToken cancellationToken);
 

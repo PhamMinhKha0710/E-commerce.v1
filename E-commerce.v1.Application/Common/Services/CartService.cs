@@ -34,8 +34,6 @@ public class CartService : ICartService
             throw new BadRequestException("Số lượng cộng dồn vượt quá tồn kho.");
 
         await _cartRepository.AddToCartAsync(userId, productId, quantity, cancellationToken);
-        // Note: AddToCartAsync currently persists internally (unique constraint handling),
-        // but we still keep a commit gate here for future thinning.
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("AddToCart completed. UserId={UserId}, ProductId={ProductId}", userId, productId);
     }

@@ -27,12 +27,12 @@ public class AhamoveEstimateRequest
     public List<AhamovePathPoint> Path { get; set; } = new();
 
     /// <summary>
-    /// Ahamove expects services as objects with "_id" + "requests" (even if empty).
-    /// Example: [{ "_id": "SGN-BIKE", "requests": [] }]
+    /// Ahamove yêu cầu <c>services</c> là list object có <c>_id</c> + <c>requests</c>
+    /// (kể cả khi requests rỗng). Ví dụ: <c>[{ "_id": "SGN-BIKE", "requests": [] }]</c>.
     /// </summary>
     public List<AhamoveEstimateService> Services { get; set; } = new();
 
-    /// <summary>BALANCE, CASH, or CASH_BY_RECIPIENT.</summary>
+    /// <summary>Giá trị hợp lệ: <c>BALANCE</c>, <c>CASH</c>, <c>CASH_BY_RECIPIENT</c>.</summary>
     public string PaymentMethod { get; set; } = "BALANCE";
 
     public List<AhamovePackageItem>? Items { get; set; }
@@ -80,14 +80,14 @@ public class AhamoveCreateOrderRequest
     public string ServiceId { get; set; } = string.Empty;
 
     /// <summary>
-    /// Special requests (can be empty). Example item: { "_id": "SGN-BIKE-TIP", "num": 1 }
+    /// "Request" bổ sung (có thể rỗng). Ví dụ: <c>{ "_id": "SGN-BIKE-TIP", "num": 1 }</c>.
     /// </summary>
     public List<AhamoveOrderRequestItem> Requests { get; set; } = new();
 
     public List<AhamovePackageItem>? Items { get; set; }
     public bool? RouteOptimized { get; set; }
 
-    /// <summary>BALANCE, CASH, or CASH_BY_RECIPIENT.</summary>
+    /// <summary>Giá trị hợp lệ: <c>BALANCE</c>, <c>CASH</c>, <c>CASH_BY_RECIPIENT</c>.</summary>
     public string PaymentMethod { get; set; } = "BALANCE";
 
     public string? PromoCode { get; set; }
