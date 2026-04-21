@@ -1,5 +1,5 @@
-using E_commerce.v1.Application.Common;
 using E_commerce.v1.Domain.Entities;
+using E_commerce.v1.Domain.Services;
 using E_commerce.v1.Domain.Exceptions;
 
 namespace E_commerce.v1.Application.Features.Coupons.Services;

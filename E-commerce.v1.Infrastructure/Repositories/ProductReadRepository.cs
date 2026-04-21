@@ -43,6 +43,8 @@ public class ProductReadRepository : IProductReadRepository
 
         var total = await query.CountAsync(cancellationToken);
 
+        // Step 1: fetch the page without correlated variant aggregates to avoid
+        // expensive per-row subqueries (Count/Min/Max) on the Products listing.
         var items = await query
             .OrderByDescending(p => p.CreatedAt)
             .Skip(skip)
@@ -60,12 +62,38 @@ public class ProductReadRepository : IProductReadRepository
                 ProductType = p.ProductType,
                 Kind = p.Kind,
                 DocumentIds = p.DocumentIds,
-                CategoryName = p.Category.Name,
-                VariantCount = p.Variants.Count(v => !v.IsDeleted),
-                MinVariantPrice = p.Variants.Where(v => !v.IsDeleted).Select(v => (decimal?)v.Price).Min(),
-                MaxVariantPrice = p.Variants.Where(v => !v.IsDeleted).Select(v => (decimal?)v.Price).Max()
+                CategoryName = p.Category.Name
             })
             .ToListAsync(cancellationToken);
+
+        // Step 2: batch-load variant aggregates for just the current page.
+        if (items.Count > 0)
+        {
+            var productIds = items.Select(i => i.Id).ToList();
+
+            var aggregates = await _context.ProductVariants
+                .AsNoTracking()
+                .Where(v => !v.IsDeleted && productIds.Contains(v.ProductId))
+                .GroupBy(v => v.ProductId)
+                .Select(g => new
+                {
+                    ProductId = g.Key,
+                    Count = g.Count(),
+                    Min = (decimal?)g.Min(v => v.Price),
+                    Max = (decimal?)g.Max(v => v.Price)
+                })
+                .ToDictionaryAsync(x => x.ProductId, cancellationToken);
+
+            foreach (var dto in items)
+            {
+                if (aggregates.TryGetValue(dto.Id, out var agg))
+                {
+                    dto.VariantCount = agg.Count;
+                    dto.MinVariantPrice = agg.Min;
+                    dto.MaxVariantPrice = agg.Max;
+                }
+            }
+        }
 
         return new PagedResult<ProductDto>
         {

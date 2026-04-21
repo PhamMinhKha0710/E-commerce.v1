@@ -1,3 +1,4 @@
+using E_commerce.v1.Application.DTOs.Common;
 using E_commerce.v1.Application.DTOs.Order;
 using E_commerce.v1.Application.DTOs.Shipping;
 using E_commerce.v1.Application.Features.Order.Commands.CancelOrder;
@@ -24,10 +25,12 @@ public class OrderController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<OrderDto>>> GetMyOrders()
+    public async Task<ActionResult<PagedResult<OrderDto>>> GetMyOrders(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 20)
     {
         var userId = User.GetRequiredUserId();
-        var result = await _mediator.Send(new GetMyOrdersQuery(userId));
+        var result = await _mediator.Send(new GetMyOrdersQuery(userId, pageNumber, pageSize));
         return Ok(result);
     }
 

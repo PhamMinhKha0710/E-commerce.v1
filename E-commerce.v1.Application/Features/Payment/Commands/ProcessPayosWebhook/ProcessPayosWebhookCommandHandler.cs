@@ -1,9 +1,10 @@
 using System.Data;
 using E_commerce.v1.Application.Interfaces;
-using E_commerce.v1.Application.Shipping;
+using E_commerce.v1.Application.Common.Shipping;
 using E_commerce.v1.Domain.Entities;
 using E_commerce.v1.Domain.Enums;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace E_commerce.v1.Application.Features.Payment.Commands.ProcessPayosWebhook;
@@ -16,6 +17,7 @@ public class ProcessPayosWebhookCommandHandler : IRequestHandler<ProcessPayosWeb
     private readonly IUnitOfWork _unitOfWork;
     private readonly IAhamoveClient _ahamoveClient;
     private readonly AhamoveOptions _ahamoveOptions;
+    private readonly ILogger<ProcessPayosWebhookCommandHandler> _logger;
 
     public ProcessPayosWebhookCommandHandler(
         IPayosWebhookVerifier verifier,
@@ -23,7 +25,8 @@ public class ProcessPayosWebhookCommandHandler : IRequestHandler<ProcessPayosWeb
         IPaymentRepository paymentRepository,
         IUnitOfWork unitOfWork,
         IAhamoveClient ahamoveClient,
-        IOptions<AhamoveOptions> ahamoveOptions)
+        IOptions<AhamoveOptions> ahamoveOptions,
+        ILogger<ProcessPayosWebhookCommandHandler> logger)
     {
         _verifier = verifier;
         _orderRepository = orderRepository;
@@ -31,6 +34,7 @@ public class ProcessPayosWebhookCommandHandler : IRequestHandler<ProcessPayosWeb
         _unitOfWork = unitOfWork;
         _ahamoveClient = ahamoveClient;
         _ahamoveOptions = ahamoveOptions.Value;
+        _logger = logger;
     }
 
     public async Task<Unit> Handle(ProcessPayosWebhookCommand request, CancellationToken cancellationToken)
@@ -44,6 +48,12 @@ public class ProcessPayosWebhookCommandHandler : IRequestHandler<ProcessPayosWeb
         var newStatus = MapPayosStatus(evt.Status);
         if (!newStatus.HasValue)
             return Unit.Value;
+
+        _logger.LogInformation(
+            "PayOS webhook verified. OrderId={OrderId}, OrderCode={OrderCode}, NewPaymentStatus={NewPaymentStatus}",
+            order.Id,
+            evt.OrderCode,
+            newStatus.Value);
 
         var now = DateTime.UtcNow;
         await _unitOfWork.ExecuteInTransactionAsync(async ct =>
@@ -171,9 +181,9 @@ public class ProcessPayosWebhookCommandHandler : IRequestHandler<ProcessPayosWeb
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
-        catch
+        catch (Exception ex)
         {
-            // do not fail webhook due to shipping provider issues
+            _logger.LogError(ex, "Auto-create Ahamove shipment failed after PayOS webhook. OrderId={OrderId}", orderId);
         }
     }
 }

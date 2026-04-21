@@ -1,10 +1,11 @@
 using System.Data;
 using E_commerce.v1.Application.Interfaces;
-using E_commerce.v1.Application.Payments;
+using E_commerce.v1.Application.Common.Payments;
 using E_commerce.v1.Domain.Entities;
 using E_commerce.v1.Domain.Enums;
 using E_commerce.v1.Domain.Exceptions;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace E_commerce.v1.Application.Features.Payment.Commands.CreatePayosPaymentLink;
@@ -17,23 +18,27 @@ public class CreatePayosPaymentLinkCommandHandler : IRequestHandler<CreatePayosP
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPayosClient _payosClient;
     private readonly PayosOptions _payosOptions;
+    private readonly ILogger<CreatePayosPaymentLinkCommandHandler> _logger;
 
     public CreatePayosPaymentLinkCommandHandler(
         IOrderRepository orderRepository,
         IPaymentRepository paymentRepository,
         IUnitOfWork unitOfWork,
         IPayosClient payosClient,
-        IOptions<PayosOptions> payosOptions)
+        IOptions<PayosOptions> payosOptions,
+        ILogger<CreatePayosPaymentLinkCommandHandler> logger)
     {
         _orderRepository = orderRepository;
         _paymentRepository = paymentRepository;
         _unitOfWork = unitOfWork;
         _payosClient = payosClient;
         _payosOptions = payosOptions.Value;
+        _logger = logger;
     }
 
     public async Task<CreatePayosPaymentLinkResponse> Handle(CreatePayosPaymentLinkCommand request, CancellationToken cancellationToken)
     {
+        _logger.LogInformation("CreatePayosPaymentLink requested. OrderId={OrderId}, UserId={UserId}", request.OrderId, request.UserId);
         var order = await _orderRepository.GetOrderByIdAsync(request.OrderId, cancellationToken);
         if (order == null) throw new NotFoundException("Không tìm thấy đơn hàng.");
         if (order.UserId != request.UserId) throw new NotFoundException("Không tìm thấy đơn hàng.");
@@ -50,6 +55,7 @@ public class CreatePayosPaymentLinkCommandHandler : IRequestHandler<CreatePayosP
         if (!string.IsNullOrWhiteSpace(order.PayosPaymentLinkId))
         {
             // If a link already exists, return it as-is (client can decide to reuse).
+            _logger.LogInformation("PayOS payment link already exists. OrderId={OrderId}", order.Id);
             return new CreatePayosPaymentLinkResponse
             {
                 OrderId = order.Id,
@@ -91,8 +97,9 @@ public class CreatePayosPaymentLinkCommandHandler : IRequestHandler<CreatePayosP
                 CancelUrl = _payosOptions.CancelUrl
             }, cancellationToken);
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to create PayOS payment link. OrderId={OrderId}", order.Id);
             // Compensate: release reservation & restore stock if PayOS call fails.
             await ReleaseReservationsAndRestoreStockAsync(order.Id, now, cancellationToken);
             throw;
