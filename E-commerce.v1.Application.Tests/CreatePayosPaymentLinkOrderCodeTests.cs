@@ -1,12 +1,13 @@
 using E_commerce.v1.Application.Features.Payment.Commands.CreatePayosPaymentLink;
 using E_commerce.v1.Application.Interfaces;
-using E_commerce.v1.Application.Payments;
+using E_commerce.v1.Application.Common.Payments;
 using E_commerce.v1.Domain.Entities;
 using E_commerce.v1.Domain.Enums;
 using E_commerce.v1.Infrastructure.Data;
 using E_commerce.v1.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
 namespace E_commerce.v1.Application.Tests;
@@ -74,7 +75,8 @@ public class CreatePayosPaymentLinkOrderCodeTests
                 ReservationTtlMinutes = 15,
                 ReturnUrl = "https://example.com/return",
                 CancelUrl = "https://example.com/cancel"
-            }));
+            }),
+            NullLogger<CreatePayosPaymentLinkCommandHandler>.Instance);
 
         var result = await handler.Handle(
             new CreatePayosPaymentLinkCommand(userId, order.Id, order.GrandTotal, "test"),

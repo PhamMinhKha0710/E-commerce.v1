@@ -1,4 +1,4 @@
-using E_commerce.v1.Application.Shipping;
+using E_commerce.v1.Application.Common.Shipping;
 using E_commerce.v1.Domain.Enums;
 
 namespace E_commerce.v1.Application.Tests;
