@@ -1,21 +1,25 @@
 using E_commerce.v1.Application.Interfaces;
 using E_commerce.v1.Domain.Exceptions;
+using Microsoft.Extensions.Logging;
 
-namespace E_commerce.v1.Application.Services;
+namespace E_commerce.v1.Application.Common.Services;
 
 public class CartService : ICartService
 {
     private readonly ICartRepository _cartRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<CartService> _logger;
 
-    public CartService(ICartRepository cartRepository, IUnitOfWork unitOfWork)
+    public CartService(ICartRepository cartRepository, IUnitOfWork unitOfWork, ILogger<CartService> logger)
     {
         _cartRepository = cartRepository;
         _unitOfWork = unitOfWork;
+        _logger = logger;
     }
 
     public async Task AddToCartAsync(Guid userId, Guid productId, int quantity, CancellationToken cancellationToken)
     {
+        _logger.LogInformation("AddToCart requested. UserId={UserId}, ProductId={ProductId}, Quantity={Quantity}", userId, productId, quantity);
         var product = await _cartRepository.GetProductByIdAsync(productId, cancellationToken);
         if (product == null) throw new NotFoundException("Sản phẩm không tồn tại.");
         if (!product.IsActive) throw new BadRequestException("Sản phẩm đã ngừng bán, không thể thêm vào giỏ.");
@@ -33,6 +37,7 @@ public class CartService : ICartService
         // Note: AddToCartAsync currently persists internally (unique constraint handling),
         // but we still keep a commit gate here for future thinning.
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("AddToCart completed. UserId={UserId}, ProductId={ProductId}", userId, productId);
     }
 }
 

@@ -1,15 +1,17 @@
 using System.Data;
 using E_commerce.v1.Application.Common;
+using E_commerce.v1.Application.Common.Shipping;
 using E_commerce.v1.Application.DTOs.Shipping;
 using E_commerce.v1.Application.Features.Order.Commands.Checkout;
 using E_commerce.v1.Application.Interfaces;
-using E_commerce.v1.Application.Shipping;
 using E_commerce.v1.Domain.Entities;
 using E_commerce.v1.Domain.Enums;
 using E_commerce.v1.Domain.Exceptions;
+using E_commerce.v1.Domain.Services;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace E_commerce.v1.Application.Services;
+namespace E_commerce.v1.Application.Common.Services;
 
 public class CheckoutService : ICheckoutService
 {
@@ -19,6 +21,7 @@ public class CheckoutService : ICheckoutService
     private readonly IAhamoveClient _ahamoveClient;
     private readonly AhamoveOptions _ahamoveOptions;
     private readonly IOrderRepository _orderRepository;
+    private readonly ILogger<CheckoutService> _logger;
 
     public CheckoutService(
         ICheckoutRepository checkoutRepository,
@@ -26,7 +29,8 @@ public class CheckoutService : ICheckoutService
         IUnitOfWork unitOfWork,
         IAhamoveClient ahamoveClient,
         IOptions<AhamoveOptions> ahamoveOptions,
-        IOrderRepository orderRepository)
+        IOrderRepository orderRepository,
+        ILogger<CheckoutService> logger)
     {
         _checkoutRepository = checkoutRepository;
         _promotionRuleReadRepository = promotionRuleReadRepository;
@@ -34,6 +38,7 @@ public class CheckoutService : ICheckoutService
         _ahamoveClient = ahamoveClient;
         _ahamoveOptions = ahamoveOptions.Value;
         _orderRepository = orderRepository;
+        _logger = logger;
     }
 
     public async Task<CheckoutResponse> CheckoutAsync(
@@ -342,9 +347,9 @@ public class CheckoutService : ICheckoutService
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
-        catch
+        catch (Exception ex)
         {
-            // do not fail checkout due to shipping provider issues
+            _logger.LogError(ex, "Auto-create Ahamove shipment failed for order {OrderId}", orderId);
         }
     }
 }

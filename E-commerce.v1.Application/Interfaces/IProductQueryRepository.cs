@@ -14,7 +14,7 @@ public interface IProductQueryRepository
 
     Task<Product?> GetProductByIdAsync(Guid productId, CancellationToken cancellationToken);
 
-    Task<Product?> UpdateProductAsync(Guid productId, Action<Product> updateAction, CancellationToken cancellationToken);
+    Task<Product?> GetProductForUpdateAsync(Guid productId, CancellationToken cancellationToken);
 
     Task<bool> DeleteProductAsync(Guid productId, CancellationToken cancellationToken);
 }

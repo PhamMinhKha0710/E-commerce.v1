@@ -1,6 +1,6 @@
 using E_commerce.v1.Domain.Enums;
 
-namespace E_commerce.v1.Application.Shipping;
+namespace E_commerce.v1.Application.Common.Shipping;
 
 public static class AhamoveStatusMapper
 {
@@ -21,3 +21,4 @@ public static class AhamoveStatusMapper
         };
     }
 }
+

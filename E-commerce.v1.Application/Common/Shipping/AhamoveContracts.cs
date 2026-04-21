@@ -1,4 +1,4 @@
-namespace E_commerce.v1.Application.Shipping;
+namespace E_commerce.v1.Application.Common.Shipping;
 
 using System.Text.Json.Serialization;
 
@@ -118,3 +118,4 @@ public class AhamoveOrderDetailsResponse
 
     public string? SharedLink { get; set; }
 }
+

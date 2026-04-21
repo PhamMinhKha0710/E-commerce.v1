@@ -1,4 +1,4 @@
-namespace E_commerce.v1.Application.Payments;
+namespace E_commerce.v1.Application.Common.Payments;
 
 public sealed class PayosWebhookEvent
 {

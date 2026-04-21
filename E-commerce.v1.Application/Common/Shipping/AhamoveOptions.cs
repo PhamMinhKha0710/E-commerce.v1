@@ -1,4 +1,4 @@
-namespace E_commerce.v1.Application.Shipping;
+namespace E_commerce.v1.Application.Common.Shipping;
 
 public class AhamoveOptions
 {
@@ -29,3 +29,4 @@ public class AhamovePickupOptions
     public string Name { get; set; } = string.Empty;
     public string Mobile { get; set; } = string.Empty;
 }
+
