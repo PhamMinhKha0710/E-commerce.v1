@@ -16,6 +16,11 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasMaxLength(64);
 
         builder.HasIndex(x => x.OrderNumber).IsUnique();
+
+        builder.HasIndex(x => new { x.UserId, x.CreatedAt })
+            .HasDatabaseName("IX_Orders_User_CreatedAt");
+        builder.HasIndex(x => new { x.Status, x.CreatedAt })
+            .HasDatabaseName("IX_Orders_Status_CreatedAt");
         
         builder.Property(x => x.Subtotal).HasColumnType("decimal(18,2)");
         builder.Property(x => x.DiscountTotal).HasColumnType("decimal(18,2)");

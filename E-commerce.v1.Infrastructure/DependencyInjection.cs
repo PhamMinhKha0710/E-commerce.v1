@@ -1,11 +1,11 @@
 using E_commerce.v1.Application.Interfaces;
-using E_commerce.v1.Application.Payments;
-using E_commerce.v1.Application.Shipping;
+using E_commerce.v1.Application.Common.Payments;
+using E_commerce.v1.Application.Common.Shipping;
 using E_commerce.v1.Infrastructure.Data;
 using E_commerce.v1.Infrastructure.Repositories;
 using E_commerce.v1.Infrastructure.Security;
-using E_commerce.v1.Infrastructure.Shipping;
-using E_commerce.v1.Infrastructure.Payments;
+using E_commerce.v1.Infrastructure.ExternalServices.Shipping;
+using E_commerce.v1.Infrastructure.ExternalServices.Payments;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -17,10 +17,13 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlServer(
-                configuration.GetConnectionString("DefaultConnection"),
-                b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
+        services.AddSingleton<SlowQueryLoggingInterceptor>();
+        services.AddDbContext<AppDbContext>((sp, options) =>
+            options
+                .UseSqlServer(
+                    configuration.GetConnectionString("DefaultConnection"),
+                    b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName))
+                .AddInterceptors(sp.GetRequiredService<SlowQueryLoggingInterceptor>()));
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
@@ -37,7 +40,9 @@ public static class DependencyInjection
         services.AddScoped<IProductQueryRepository, ProductQueryRepository>();
         services.AddScoped<IProductReadRepository, ProductReadRepository>();
         services.AddScoped<IPromotionRuleRepository, PromotionRuleRepository>();
-        services.AddScoped<IPromotionRuleReadRepository, PromotionRuleReadRepository>();
+        services.AddMemoryCache();
+        services.AddScoped<PromotionRuleReadRepository>();
+        services.AddScoped<IPromotionRuleReadRepository, CachedPromotionRuleReadRepository>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<ICategoryReadRepository, CategoryReadRepository>();
         services.AddScoped<IOrderRepository, OrderRepository>();

@@ -3,11 +3,11 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using E_commerce.v1.Application.Interfaces;
-using E_commerce.v1.Application.Shipping;
+using E_commerce.v1.Application.Common.Shipping;
 using E_commerce.v1.Domain.Exceptions;
 using Microsoft.Extensions.Options;
 
-namespace E_commerce.v1.Infrastructure.Shipping;
+namespace E_commerce.v1.Infrastructure.ExternalServices.Shipping;
 
 public class AhamoveClient : IAhamoveClient
 {

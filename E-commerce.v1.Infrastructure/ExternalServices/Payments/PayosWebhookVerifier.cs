@@ -1,11 +1,11 @@
 using System.Text.Json;
 using E_commerce.v1.Application.Interfaces;
-using E_commerce.v1.Application.Payments;
+using E_commerce.v1.Application.Common.Payments;
 using E_commerce.v1.Domain.Exceptions;
 using Microsoft.Extensions.Options;
 using PayOS.Crypto;
 
-namespace E_commerce.v1.Infrastructure.Payments;
+namespace E_commerce.v1.Infrastructure.ExternalServices.Payments;
 
 public class PayosWebhookVerifier : IPayosWebhookVerifier
 {

@@ -1,11 +1,11 @@
 using E_commerce.v1.Application.Interfaces;
-using E_commerce.v1.Application.Payments;
+using E_commerce.v1.Application.Common.Payments;
 using Microsoft.Extensions.Options;
 using PayOS.Models;
 using PayOS.Models.V2.PaymentRequests;
 using PayOS.Resources.V2.PaymentRequests;
 
-namespace E_commerce.v1.Infrastructure.Payments;
+namespace E_commerce.v1.Infrastructure.ExternalServices.Payments;
 
 public class PayosClient : IPayosClient
 {
