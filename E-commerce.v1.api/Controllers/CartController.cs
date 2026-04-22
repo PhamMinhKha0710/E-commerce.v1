@@ -25,7 +25,6 @@ public class CartController : ControllerBase
         _mediator = mediator;
     }
 
-    /// <summary>Lấy giỏ hàng của user hiện tại.</summary>
     [HttpGet]
     public async Task<ActionResult<CartDto>> GetCart()
     {
@@ -36,7 +35,8 @@ public class CartController : ControllerBase
     }
 
     /// <summary>
-    /// Đồng bộ giỏ guest (localStorage) vào DB sau khi đăng nhập.
+    /// Merge giỏ guest (lưu ở localStorage phía FE) vào giỏ DB ngay sau khi user login,
+    /// để các item thêm lúc chưa đăng nhập không bị mất.
     /// </summary>
     [HttpPost("sync")]
     public async Task<ActionResult<CartDto>> SyncCart([FromBody] SyncCartRequest request)
@@ -46,15 +46,8 @@ public class CartController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>Thêm sản phẩm vào giỏ hàng (RESTful).</summary>
     [HttpPost("items")]
     public async Task<ActionResult<CartActionResponse>> AddToCartItems([FromBody] AddToCartCommandRequest request)
-        => await AddToCartInternal(request);
-
-    /// <summary>Thêm sản phẩm vào giỏ hàng (deprecated, dùng POST api/v1/cart/items).</summary>
-    [HttpPost("add")]
-    [Obsolete("Use POST api/v1/cart/items instead.")]
-    public async Task<ActionResult<CartActionResponse>> AddToCart([FromBody] AddToCartCommandRequest request)
         => await AddToCartInternal(request);
 
     private async Task<ActionResult<CartActionResponse>> AddToCartInternal(AddToCartCommandRequest request)
@@ -71,7 +64,10 @@ public class CartController : ControllerBase
         return Ok(new CartActionResponse("Sản phẩm đã được thêm vào giỏ hàng thành công."));
     }
 
-    /// <summary>Cập nhật số lượng sản phẩm trong giỏ hàng. Nếu Quantity = 0, dòng sẽ bị xóa.</summary>
+    /// <summary>
+    /// Cập nhật số lượng cart item. Khi <c>Quantity = 0</c>, endpoint sẽ xóa luôn
+    /// dòng đó (tương đương DELETE) để FE chỉ cần 1 action cho stepper +/-.
+    /// </summary>
     [HttpPut("items/{id:guid}")]
     public async Task<ActionResult<CartActionResponse>> UpdateCartItem(Guid id, [FromBody] UpdateCartItemRequest request)
     {
@@ -87,7 +83,6 @@ public class CartController : ControllerBase
         return Ok(new CartActionResponse("Giỏ hàng đã được cập nhật thành công."));
     }
 
-    /// <summary>Xóa một dòng trong giỏ (tương đương PUT quantity = 0).</summary>
     [HttpDelete("items/{id:guid}")]
     public async Task<IActionResult> RemoveCartItem(Guid id)
     {
@@ -96,7 +91,6 @@ public class CartController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>Xóa toàn bộ giỏ.</summary>
     [HttpDelete]
     public async Task<IActionResult> ClearCart()
     {
@@ -106,17 +100,12 @@ public class CartController : ControllerBase
     }
 
     /// <summary>
-    /// Checkout giỏ hàng. Khi có <c>cartItemIds</c> thì checkout các item được chọn;
-    /// khi bỏ trống thì checkout toàn bộ giỏ hàng.
+    /// Checkout giỏ hàng. Có <c>cartItemIds</c> = chỉ checkout các item được chọn
+    /// (case user tick một vài sản phẩm); bỏ trống = checkout toàn bộ giỏ.
+    /// Một endpoint xử lý cả hai case để FE không cần phân nhánh route.
     /// </summary>
     [HttpPost("checkout")]
     public async Task<ActionResult<CheckoutResponse>> Checkout([FromBody] CheckoutRequest request)
-        => await CheckoutInternal(request.CartItemIds, request.PaymentMethod, request.Shipping);
-
-    /// <summary>Checkout các item được chọn (deprecated, dùng POST api/v1/cart/checkout với cartItemIds).</summary>
-    [HttpPost("checkout-selected")]
-    [Obsolete("Use POST api/v1/cart/checkout with cartItemIds instead.")]
-    public async Task<ActionResult<CheckoutResponse>> CheckoutSelected([FromBody] CheckoutSelectedRequest request)
         => await CheckoutInternal(request.CartItemIds, request.PaymentMethod, request.Shipping);
 
     private async Task<ActionResult<CheckoutResponse>> CheckoutInternal(
@@ -162,15 +151,8 @@ public class CheckoutRequest
     public PaymentMethod PaymentMethod { get; set; }
     public CheckoutShippingInfo? Shipping { get; set; }
 
-    /// <summary>Khi có giá trị, chỉ checkout các cart item được chọn; bỏ trống = checkout toàn bộ giỏ.</summary>
+    /// <summary>Có giá trị = chỉ checkout các cart item được chọn; null/empty = checkout toàn bộ giỏ.</summary>
     public List<Guid>? CartItemIds { get; set; }
-}
-
-public class CheckoutSelectedRequest
-{
-    public List<Guid> CartItemIds { get; set; } = new();
-    public PaymentMethod PaymentMethod { get; set; }
-    public CheckoutShippingInfo? Shipping { get; set; }
 }
 
 public class ApplyCouponRequest

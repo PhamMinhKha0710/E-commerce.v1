@@ -45,14 +45,9 @@ public class ProductQueryRepository : IProductQueryRepository
             .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
     }
 
-    public async Task<Product?> UpdateProductAsync(Guid productId, Action<Product> updateAction, CancellationToken cancellationToken)
+    public async Task<Product?> GetProductForUpdateAsync(Guid productId, CancellationToken cancellationToken)
     {
-        var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
-        if (product != null)
-        {
-            updateAction(product);
-        }
-        return product;
+        return await _context.Products.FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
     }
 
     public async Task<bool> DeleteProductAsync(Guid productId, CancellationToken cancellationToken)

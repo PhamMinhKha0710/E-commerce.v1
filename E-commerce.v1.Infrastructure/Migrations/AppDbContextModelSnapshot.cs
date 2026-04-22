@@ -397,7 +397,11 @@ namespace E_commerce.v1.Infrastructure.Migrations
 
                     b.HasIndex("PromotionRuleId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("Status", "CreatedAt")
+                        .HasDatabaseName("IX_Orders_Status_CreatedAt");
+
+                    b.HasIndex("UserId", "CreatedAt")
+                        .HasDatabaseName("IX_Orders_User_CreatedAt");
 
                     b.ToTable("Orders", (string)null);
                 });
@@ -607,13 +611,17 @@ namespace E_commerce.v1.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoryId");
+                    b.HasIndex("CategoryId")
+                        .HasDatabaseName("IX_Products_CategoryId");
 
                     b.HasIndex("Sku")
                         .IsUnique();
 
                     b.HasIndex("Slug")
                         .IsUnique();
+
+                    b.HasIndex("IsDeleted", "CreatedAt")
+                        .HasDatabaseName("IX_Products_IsDeleted_CreatedAt");
 
                     b.ToTable("Products", (string)null);
                 });

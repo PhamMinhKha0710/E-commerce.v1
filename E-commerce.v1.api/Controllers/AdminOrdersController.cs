@@ -22,7 +22,6 @@ public class AdminOrdersController : ControllerBase
         _mediator = mediator;
     }
 
-    /// <summary>Liệt kê đơn hàng cho admin (filter theo status, khoảng ngày, phân trang).</summary>
     [HttpGet]
     public async Task<ActionResult<PagedResult<OrderDto>>> List(
         [FromQuery] OrderStatus? status = null,
@@ -36,7 +35,10 @@ public class AdminOrdersController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>Chi tiết đơn hàng cho admin (không giới hạn theo user).</summary>
+    /// <summary>
+    /// Chi tiết đơn cho admin: không filter theo <c>UserId</c> như endpoint public
+    /// <c>api/v1/orders/{id}</c>, nên admin xem được đơn của bất kỳ khách nào.
+    /// </summary>
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<OrderDto>> GetById(Guid id)
     {

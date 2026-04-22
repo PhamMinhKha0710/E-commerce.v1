@@ -1,3 +1,4 @@
+using E_commerce.v1.Application.DTOs.Common;
 using E_commerce.v1.Application.DTOs.Order;
 using E_commerce.v1.Application.DTOs.Shipping;
 using E_commerce.v1.Application.Features.Order.Commands.CancelOrder;
@@ -24,10 +25,12 @@ public class OrderController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<OrderDto>>> GetMyOrders()
+    public async Task<ActionResult<PagedResult<OrderDto>>> GetMyOrders(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 20)
     {
         var userId = User.GetRequiredUserId();
-        var result = await _mediator.Send(new GetMyOrdersQuery(userId));
+        var result = await _mediator.Send(new GetMyOrdersQuery(userId, pageNumber, pageSize));
         return Ok(result);
     }
 
@@ -39,15 +42,8 @@ public class OrderController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>Tạo shipment cho đơn hàng.</summary>
     [HttpPost("{orderId:guid}/shipment")]
     public async Task<ActionResult<CreateShipmentResponse>> CreateShipment(Guid orderId, [FromBody] CreateShipmentRequest body)
-        => await CreateShipmentInternal(orderId, body);
-
-    /// <summary>Tạo shipment cho đơn hàng (deprecated, dùng POST api/v1/orders/{id}/shipment).</summary>
-    [HttpPost("{orderId:guid}/create-shipment")]
-    [Obsolete("Use POST api/v1/orders/{orderId}/shipment instead.")]
-    public async Task<ActionResult<CreateShipmentResponse>> CreateShipmentLegacy(Guid orderId, [FromBody] CreateShipmentRequest body)
         => await CreateShipmentInternal(orderId, body);
 
     private async Task<ActionResult<CreateShipmentResponse>> CreateShipmentInternal(Guid orderId, CreateShipmentRequest body)
@@ -57,7 +53,10 @@ public class OrderController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>Huỷ đơn hàng (chỉ owner, khi đơn còn ở Pending/Confirmed và chưa thanh toán).</summary>
+    /// <summary>
+    /// Huỷ đơn: chỉ owner mới được huỷ, và chỉ cho phép khi đơn ở trạng thái
+    /// Pending/Confirmed và chưa có payment thành công (business rule).
+    /// </summary>
     [HttpPost("{id:guid}/cancel")]
     public async Task<IActionResult> CancelOrder(Guid id)
     {

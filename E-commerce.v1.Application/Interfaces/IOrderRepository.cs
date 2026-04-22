@@ -1,4 +1,5 @@
 using E_commerce.v1.Domain.Entities;
+using E_commerce.v1.Domain.Enums;
 
 namespace E_commerce.v1.Application.Interfaces;
 
@@ -16,5 +17,5 @@ public interface IOrderRepository
         int take,
         CancellationToken cancellationToken);
 
-    Task<Order?> UpdateOrderStatusAsync(Guid orderId, int newStatus, CancellationToken cancellationToken);
+    Task<Order?> UpdateOrderStatusAsync(Guid orderId, OrderStatus newStatus, CancellationToken cancellationToken);
 }

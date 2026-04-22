@@ -5,7 +5,7 @@ public class CartDto
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
     public List<CartItemDto> CartItems { get; set; } = new List<CartItemDto>();
-    public decimal TotalAmount { get; set; } // Tổng giá tiền của tất cả items
+    public decimal TotalAmount { get; set; }
     public Guid? AppliedPromotionRuleId { get; set; }
     public string? PromotionSummary { get; set; }
     public decimal PromotionDiscount { get; set; }

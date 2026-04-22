@@ -8,7 +8,11 @@ public interface IOrderReadRepository
 {
     Task<OrderDto?> GetByIdAsync(Guid orderId, Guid? userId, CancellationToken cancellationToken);
 
-    Task<List<OrderDto>> GetMyOrdersAsync(Guid userId, CancellationToken cancellationToken);
+    Task<PagedResult<OrderDto>> SearchMyOrdersAsync(
+        Guid userId,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken);
 
     Task<PagedResult<OrderDto>> SearchAsync(
         OrderStatus? status,

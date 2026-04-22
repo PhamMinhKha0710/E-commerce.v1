@@ -58,12 +58,12 @@ public class OrderRepository : IOrderRepository
         return (items, total);
     }
 
-    public async Task<Order?> UpdateOrderStatusAsync(Guid orderId, int newStatus, CancellationToken cancellationToken)
+    public async Task<Order?> UpdateOrderStatusAsync(Guid orderId, OrderStatus newStatus, CancellationToken cancellationToken)
     {
         var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
         if (order != null)
         {
-            order.Status = (OrderStatus)newStatus;
+            order.Status = newStatus;
         }
         return order;
     }

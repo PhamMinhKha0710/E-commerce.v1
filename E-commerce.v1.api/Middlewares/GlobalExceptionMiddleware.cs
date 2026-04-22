@@ -34,12 +34,13 @@ public class GlobalExceptionMiddleware
     private static Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
         context.Response.ContentType = "application/json";
-        
+
         var statusCode = HttpStatusCode.InternalServerError;
         var message = "An internal server error occurred.";
         object? errors = null;
-        
-        // Mapping HTTP Codes dựa theo loại Exception
+
+        // Map exception nghiệp vụ → HTTP status chuẩn để client (FE/mobile) xử lý
+        // theo mã thay vì parse message. Default là 500 để không lộ chi tiết nội bộ.
         switch (exception)
         {
             case ValidationException validationException:
@@ -49,7 +50,7 @@ public class GlobalExceptionMiddleware
                     .GroupBy(e => e.PropertyName, e => e.ErrorMessage)
                     .ToDictionary(g => g.Key, g => g.ToArray());
                 break;
-                
+
             case E_commerce.v1.Domain.Exceptions.BadRequestException badRequestEx:
                 statusCode = HttpStatusCode.BadRequest;
                 message = badRequestEx.Message;
@@ -63,10 +64,6 @@ public class GlobalExceptionMiddleware
             case UnauthorizedAccessException unauthorizedEx:
                 statusCode = HttpStatusCode.Unauthorized;
                 message = unauthorizedEx.Message;
-                break;
-                
-            default:
-                message = "An internal server error occurred.";
                 break;
         }
 
