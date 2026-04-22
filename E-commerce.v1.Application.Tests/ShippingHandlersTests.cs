@@ -4,13 +4,14 @@ using E_commerce.v1.Application.Features.Shipping.Commands.CreateShipment;
 using E_commerce.v1.Application.Features.Shipping.Commands.ProcessAhamoveWebhook;
 using E_commerce.v1.Application.Features.Shipping.Queries.GetShippingFee;
 using E_commerce.v1.Application.Interfaces;
-using E_commerce.v1.Application.Shipping;
+using E_commerce.v1.Application.Common.Shipping;
 using E_commerce.v1.Domain.Entities;
 using E_commerce.v1.Domain.Enums;
 using E_commerce.v1.Domain.Exceptions;
 using E_commerce.v1.Infrastructure.Data;
 using E_commerce.v1.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
 namespace E_commerce.v1.Application.Tests;
@@ -83,7 +84,15 @@ public class ShippingHandlersTests
 
         var orderRepo = new OrderRepository(context);
         var uow = new EfUnitOfWork(context);
-        var handler = new CreateShipmentCommandHandler(orderRepo, client, uow);
+        var handler = new CreateShipmentCommandHandler(
+            orderRepo,
+            client,
+            uow,
+            Options.Create(new AhamoveOptions
+            {
+                Pickup = new AhamovePickupOptions { Lat = 1, Lng = 1, Address = "Pickup", Name = "Shop", Mobile = "090" }
+            }),
+            NullLogger<CreateShipmentCommandHandler>.Instance);
 
         var result = await handler.Handle(
             new CreateShipmentCommand(
@@ -118,7 +127,15 @@ public class ShippingHandlersTests
         };
         var orderRepo = new OrderRepository(context);
         var uow = new EfUnitOfWork(context);
-        var handler = new CreateShipmentCommandHandler(orderRepo, client, uow);
+        var handler = new CreateShipmentCommandHandler(
+            orderRepo,
+            client,
+            uow,
+            Options.Create(new AhamoveOptions
+            {
+                Pickup = new AhamovePickupOptions { Lat = 1, Lng = 1, Address = "Pickup", Name = "Shop", Mobile = "090" }
+            }),
+            NullLogger<CreateShipmentCommandHandler>.Instance);
 
         await handler.Handle(
             new CreateShipmentCommand(
@@ -156,7 +173,12 @@ public class ShippingHandlersTests
         var handler = new CreateShipmentCommandHandler(
             new OrderRepository(context),
             new FakeAhamoveClient(),
-            new EfUnitOfWork(context));
+            new EfUnitOfWork(context),
+            Options.Create(new AhamoveOptions
+            {
+                Pickup = new AhamovePickupOptions { Lat = 1, Lng = 1, Address = "Pickup", Name = "Shop", Mobile = "090" }
+            }),
+            NullLogger<CreateShipmentCommandHandler>.Instance);
 
         await Assert.ThrowsAsync<NotFoundException>(() => handler.Handle(
             new CreateShipmentCommand(
@@ -187,7 +209,8 @@ public class ShippingHandlersTests
         var handler = new ProcessAhamoveWebhookCommandHandler(
             new OrderRepository(context),
             new EfUnitOfWork(context),
-            options);
+            options,
+            NullLogger<ProcessAhamoveWebhookCommandHandler>.Instance);
 
         var payload = JsonSerializer.SerializeToElement(new
         {
@@ -211,7 +234,8 @@ public class ShippingHandlersTests
         var handler = new ProcessAhamoveWebhookCommandHandler(
             new OrderRepository(context),
             new EfUnitOfWork(context),
-            options);
+            options,
+            NullLogger<ProcessAhamoveWebhookCommandHandler>.Instance);
 
         var payload = JsonSerializer.SerializeToElement(new
         {
@@ -314,11 +338,7 @@ public class ShippingHandlersTests
 
         public Task<AhamoveCreateOrderResponse> CreateOrderAsync(AhamoveCreateOrderRequest request, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new AhamoveCreateOrderResponse
-            {
-                OrderId = "AHM-MOCK-123",
-                Status = "ASSIGNING"
-            });
+            return Task.FromResult(CreateResult);
         }
 
         public Task<AhamoveOrderDetailsResponse> GetOrderDetailsAsync(string orderId, CancellationToken cancellationToken = default)

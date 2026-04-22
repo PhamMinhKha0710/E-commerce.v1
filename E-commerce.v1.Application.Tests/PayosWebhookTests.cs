@@ -1,14 +1,15 @@
 using System.Text.Json;
 using E_commerce.v1.Application.Features.Payment.Commands.ProcessPayosWebhook;
 using E_commerce.v1.Application.Interfaces;
-using E_commerce.v1.Application.Shipping;
+using E_commerce.v1.Application.Common.Shipping;
 using E_commerce.v1.Domain.Entities;
 using E_commerce.v1.Domain.Enums;
 using E_commerce.v1.Infrastructure.Data;
-using E_commerce.v1.Infrastructure.Payments;
+using E_commerce.v1.Infrastructure.ExternalServices.Payments;
 using E_commerce.v1.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using PayOS.Crypto;
 
@@ -19,7 +20,7 @@ public class PayosWebhookTests
     [Fact]
     public async Task should_verify_and_parse_webhook_when_signature_valid()
     {
-        var verifier = new PayosWebhookVerifier(Options.Create(new Application.Payments.PayosOptions
+        var verifier = new PayosWebhookVerifier(Options.Create(new Application.Common.Payments.PayosOptions
         {
             ChecksumKey = "checksum-key"
         }));
@@ -239,7 +240,7 @@ public class PayosWebhookTests
 
     private static ProcessPayosWebhookCommandHandler CreateHandler(AppDbContext context, string checksumKey)
     {
-        var verifier = new PayosWebhookVerifier(Options.Create(new Application.Payments.PayosOptions
+        var verifier = new PayosWebhookVerifier(Options.Create(new Application.Common.Payments.PayosOptions
         {
             ChecksumKey = checksumKey
         }));
@@ -262,7 +263,14 @@ public class PayosWebhookTests
             }
         });
 
-        return new ProcessPayosWebhookCommandHandler(verifier, orderRepo, paymentRepo, uow, ahamoveClient, ahamoveOptions);
+        return new ProcessPayosWebhookCommandHandler(
+            verifier,
+            orderRepo,
+            paymentRepo,
+            uow,
+            ahamoveClient,
+            ahamoveOptions,
+            NullLogger<ProcessPayosWebhookCommandHandler>.Instance);
     }
 
     private static string CreateSignedWebhookBody(long orderCode, int amount, string status, string checksumKey, string paymentLinkId, string id)
@@ -304,6 +312,9 @@ public class PayosWebhookTests
 
         public Task<AhamoveCreateOrderResponse> CreateOrderAsync(AhamoveCreateOrderRequest request, CancellationToken cancellationToken = default)
             => Task.FromResult(new AhamoveCreateOrderResponse { OrderId = "AH-TEST", Status = "ASSIGNING" });
+
+        public Task<AhamoveOrderDetailsResponse> GetOrderDetailsAsync(string orderId, CancellationToken cancellationToken = default)
+            => Task.FromResult(new AhamoveOrderDetailsResponse { OrderId = orderId, Status = "ASSIGNING" });
     }
 }
 

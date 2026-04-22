@@ -7,6 +7,7 @@ using E_commerce.v1.Domain.Exceptions;
 using E_commerce.v1.Infrastructure.Data;
 using E_commerce.v1.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace E_commerce.v1.Application.Tests;
 
@@ -103,7 +104,7 @@ public class CancelOrderCommandHandlerTests
         var checkoutRepo = new CheckoutRepository(context);
         var paymentRepo = new PaymentRepository(context, checkoutRepo);
         var uow = new NoopUnitOfWork(context);
-        return new CancelOrderCommandHandler(orderRepo, paymentRepo, uow);
+        return new CancelOrderCommandHandler(orderRepo, paymentRepo, uow, NullLogger<CancelOrderCommandHandler>.Instance);
     }
 
     private static async Task<(Guid OrderId, Guid ProductId)> SeedOrderWithReservation(

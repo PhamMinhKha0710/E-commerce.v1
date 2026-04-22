@@ -1,6 +1,6 @@
 using E_commerce.v1.Application.DTOs.Shipping;
 using E_commerce.v1.Application.Interfaces;
-using E_commerce.v1.Application.Shipping;
+using E_commerce.v1.Application.Common.Shipping;
 using MediatR;
 using Microsoft.Extensions.Options;
 

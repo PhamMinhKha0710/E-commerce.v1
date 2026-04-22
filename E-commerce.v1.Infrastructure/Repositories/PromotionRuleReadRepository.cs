@@ -20,11 +20,12 @@ public class PromotionRuleReadRepository : IPromotionRuleReadRepository
     {
         return _context.PromotionRules
             .AsNoTracking()
+            .AsSplitQuery()
+            .Where(r => r.IsActive && r.StartDate <= utcNow && r.EndDate >= utcNow)
             .Include(r => r.Products)
             .Include(r => r.Categories)
             .Include(r => r.BuyXGetYAction)
             .Include(r => r.PercentageAction)
-            .Where(r => r.IsActive && r.StartDate <= utcNow && r.EndDate >= utcNow)
             .ToListAsync(cancellationToken);
     }
 

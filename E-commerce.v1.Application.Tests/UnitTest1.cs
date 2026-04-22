@@ -1,13 +1,14 @@
 using E_commerce.v1.Application.Features.Reviews.Commands.PostReview;
 using E_commerce.v1.Application.Features.Reviews.Queries.GetProductReviews;
 using E_commerce.v1.Application.Interfaces;
-using E_commerce.v1.Application.Services;
+using E_commerce.v1.Application.Common.Services;
 using E_commerce.v1.Domain.Entities;
 using E_commerce.v1.Domain.Enums;
 using E_commerce.v1.Domain.Exceptions;
 using E_commerce.v1.Infrastructure.Data;
 using E_commerce.v1.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace E_commerce.v1.Application.Tests;
 
@@ -24,7 +25,7 @@ public class ReviewHandlersTests
 
         var reviewRepository = new ReviewRepository(context);
         var unitOfWork = new EfUnitOfWork(context);
-        var reviewService = new ReviewService(reviewRepository, unitOfWork);
+        var reviewService = new ReviewService(reviewRepository, unitOfWork, NullLogger<ReviewService>.Instance);
         var handler = new PostReviewCommandHandler(reviewService);
         var command = new PostReviewCommand
         {
@@ -44,7 +45,7 @@ public class ReviewHandlersTests
         var seed = await SeedCompletedOrderWithProduct(context);
         var reviewRepository = new ReviewRepository(context);
         var unitOfWork = new EfUnitOfWork(context);
-        var reviewService = new ReviewService(reviewRepository, unitOfWork);
+        var reviewService = new ReviewService(reviewRepository, unitOfWork, NullLogger<ReviewService>.Instance);
         var handler = new PostReviewCommandHandler(reviewService);
 
         var firstReviewId = await handler.Handle(

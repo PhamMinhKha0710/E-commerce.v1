@@ -1,4 +1,4 @@
-using E_commerce.v1.Application.Shipping;
+using E_commerce.v1.Application.Common.Shipping;
 
 namespace E_commerce.v1.Application.DTOs.Shipping;
 
@@ -13,10 +13,10 @@ public class GetShippingFeeRequest
 
 public class CheckoutShippingInfo
 {
-    /// <summary>Ahamove service id, e.g. SGN-BIKE.</summary>
+    /// <summary>Ahamove service id, ví dụ <c>SGN-BIKE</c>.</summary>
     public string ServiceId { get; set; } = string.Empty;
 
-    /// <summary>Receiver (dropoff) point. Lat/Lng/Address required.</summary>
+    /// <summary>Điểm giao (dropoff). Bắt buộc có Lat/Lng/Address.</summary>
     public AhamovePathPoint Dropoff { get; set; } = new();
 
     public List<AhamovePackageItem>? Items { get; set; }
@@ -47,7 +47,7 @@ public class CreateShipmentRequest
     public List<AhamovePackageItem>? Items { get; set; }
     public bool? RouteOptimized { get; set; }
 
-    /// <summary>Ahamove shipping payment: BALANCE, CASH, or CASH_BY_RECIPIENT.</summary>
+    /// <summary>Giá trị hợp lệ: <c>BALANCE</c>, <c>CASH</c>, <c>CASH_BY_RECIPIENT</c>.</summary>
     public string AhamovePaymentMethod { get; set; } = "BALANCE";
 
     public string? PromoCode { get; set; }

@@ -51,6 +51,11 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.HasIndex(p => p.Sku)
             .IsUnique();
 
+        builder.HasIndex(p => new { p.IsDeleted, p.CreatedAt })
+            .HasDatabaseName("IX_Products_IsDeleted_CreatedAt");
+        builder.HasIndex(p => p.CategoryId)
+            .HasDatabaseName("IX_Products_CategoryId");
+
         var docIdsConverter = new ValueConverter<List<string>, string>(
             v => JsonSerializer.Serialize(v, JsonOptions),
             v => string.IsNullOrWhiteSpace(v)

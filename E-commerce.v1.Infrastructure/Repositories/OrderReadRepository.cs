@@ -63,12 +63,25 @@ public class OrderReadRepository : IOrderReadRepository
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task<List<OrderDto>> GetMyOrdersAsync(Guid userId, CancellationToken cancellationToken)
+    public async Task<PagedResult<OrderDto>> SearchMyOrdersAsync(
+        Guid userId,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken)
     {
-        return await _context.Orders
+        var safePage = page <= 0 ? 1 : page;
+        var safeSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 100);
+
+        var query = _context.Orders
             .AsNoTracking()
-            .Where(o => o.UserId == userId)
+            .Where(o => o.UserId == userId);
+
+        var total = await query.CountAsync(cancellationToken);
+
+        var items = await query
             .OrderByDescending(o => o.CreatedAt)
+            .Skip((safePage - 1) * safeSize)
+            .Take(safeSize)
             .Select(o => new OrderDto
             {
                 Id = o.Id,
@@ -104,6 +117,14 @@ public class OrderReadRepository : IOrderReadRepository
                 }).ToList()
             })
             .ToListAsync(cancellationToken);
+
+        return new PagedResult<OrderDto>
+        {
+            Items = items,
+            TotalCount = total,
+            PageNumber = safePage,
+            PageSize = safeSize
+        };
     }
 
     public async Task<PagedResult<OrderDto>> SearchAsync(

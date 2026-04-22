@@ -1,13 +1,14 @@
 using E_commerce.v1.Application.DTOs.Shipping;
 using E_commerce.v1.Application.Interfaces;
-using E_commerce.v1.Application.Services;
-using E_commerce.v1.Application.Shipping;
+using E_commerce.v1.Application.Common.Services;
+using E_commerce.v1.Application.Common.Shipping;
 using E_commerce.v1.Domain.Entities;
 using E_commerce.v1.Domain.Enums;
 using E_commerce.v1.Infrastructure.Data;
 using E_commerce.v1.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
 namespace E_commerce.v1.Application.Tests;
@@ -77,7 +78,8 @@ public class CheckoutServiceShippingTests
             unitOfWork,
             ahamove,
             options,
-            orderRepository);
+            orderRepository,
+            NullLogger<CheckoutService>.Instance);
 
         var response = await service.CheckoutAsync(
             userId,
@@ -148,12 +150,16 @@ public class CheckoutServiceShippingTests
     {
         public IReadOnlyList<AhamoveEstimateResultItem> EstimateResult { get; set; } = Array.Empty<AhamoveEstimateResultItem>();
         public AhamoveCreateOrderResponse CreateResult { get; set; } = new();
+        public AhamoveOrderDetailsResponse DetailsResult { get; set; } = new();
 
         public Task<IReadOnlyList<AhamoveEstimateResultItem>> EstimateAsync(AhamoveEstimateRequest request, CancellationToken cancellationToken = default)
             => Task.FromResult(EstimateResult);
 
         public Task<AhamoveCreateOrderResponse> CreateOrderAsync(AhamoveCreateOrderRequest request, CancellationToken cancellationToken = default)
             => Task.FromResult(CreateResult);
+
+        public Task<AhamoveOrderDetailsResponse> GetOrderDetailsAsync(string orderId, CancellationToken cancellationToken = default)
+            => Task.FromResult(DetailsResult);
     }
 }
 

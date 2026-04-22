@@ -25,7 +25,6 @@ public sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<App
             .SetBasePath(apiPath)
             .AddJsonFile("appsettings.json", optional: true)
             .AddJsonFile("appsettings.Development.json", optional: true)
-            // Load API user-secrets by reading secrets.json directly.
             .AddJsonFile(secretsPath, optional: true)
             .AddEnvironmentVariables()
             .Build();
@@ -33,7 +32,6 @@ public sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<App
         var connectionString = configuration.GetConnectionString("DefaultConnection");
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            // Fallback only when no config is available.
             connectionString =
                 "Server=(localdb)\\mssqllocaldb;Database=EcommerceDesign;Trusted_Connection=True;TrustServerCertificate=True";
         }
@@ -56,7 +54,6 @@ public sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<App
                 return candidate;
         }
 
-        // As a last resort, use current directory.
         return Directory.GetCurrentDirectory();
     }
 

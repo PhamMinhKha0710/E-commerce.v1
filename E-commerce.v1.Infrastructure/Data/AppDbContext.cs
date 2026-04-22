@@ -55,8 +55,7 @@ public class AppDbContext : DbContext
             .HasOne(ur => ur.Role)
             .WithMany(r => r.UserRoles)
             .HasForeignKey(ur => ur.RoleId);
-        
-        // Tự động tìm kiếm các file cấu hình ánh xạ DB (Configurations) trong project
+
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
     }
 

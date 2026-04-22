@@ -1,4 +1,4 @@
-using E_commerce.v1.Application.Payments;
+using E_commerce.v1.Application.Common.Payments;
 
 namespace E_commerce.v1.Application.Interfaces;
 

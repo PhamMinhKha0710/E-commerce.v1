@@ -10,7 +10,6 @@ public class CartItemConfiguration : IEntityTypeConfiguration<CartItem>
     {
         builder.HasKey(ci => ci.Id);
 
-        // quantity > 0
         builder.Property(ci => ci.Quantity).IsRequired();
 
         builder.HasOne(ci => ci.Cart)
@@ -18,7 +17,6 @@ public class CartItemConfiguration : IEntityTypeConfiguration<CartItem>
                .HasForeignKey(ci => ci.CartId)
                .OnDelete(DeleteBehavior.Cascade);
 
-        // add relationship between CartItem and Product
         builder.HasOne(ci => ci.Product)
                .WithMany()
                .HasForeignKey(ci => ci.ProductId)
