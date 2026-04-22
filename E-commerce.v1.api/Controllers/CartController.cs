@@ -50,12 +50,6 @@ public class CartController : ControllerBase
     public async Task<ActionResult<CartActionResponse>> AddToCartItems([FromBody] AddToCartCommandRequest request)
         => await AddToCartInternal(request);
 
-    /// <summary>[Deprecated] Dùng <c>POST api/v1/cart/items</c>.</summary>
-    [HttpPost("add")]
-    [Obsolete("Use POST api/v1/cart/items instead.")]
-    public async Task<ActionResult<CartActionResponse>> AddToCart([FromBody] AddToCartCommandRequest request)
-        => await AddToCartInternal(request);
-
     private async Task<ActionResult<CartActionResponse>> AddToCartInternal(AddToCartCommandRequest request)
     {
         var userId = User.GetRequiredUserId();
@@ -114,12 +108,6 @@ public class CartController : ControllerBase
     public async Task<ActionResult<CheckoutResponse>> Checkout([FromBody] CheckoutRequest request)
         => await CheckoutInternal(request.CartItemIds, request.PaymentMethod, request.Shipping);
 
-    /// <summary>[Deprecated] Dùng <c>POST api/v1/cart/checkout</c> và truyền <c>cartItemIds</c>.</summary>
-    [HttpPost("checkout-selected")]
-    [Obsolete("Use POST api/v1/cart/checkout with cartItemIds instead.")]
-    public async Task<ActionResult<CheckoutResponse>> CheckoutSelected([FromBody] CheckoutSelectedRequest request)
-        => await CheckoutInternal(request.CartItemIds, request.PaymentMethod, request.Shipping);
-
     private async Task<ActionResult<CheckoutResponse>> CheckoutInternal(
         List<Guid>? cartItemIds,
         PaymentMethod paymentMethod,
@@ -165,13 +153,6 @@ public class CheckoutRequest
 
     /// <summary>Có giá trị = chỉ checkout các cart item được chọn; null/empty = checkout toàn bộ giỏ.</summary>
     public List<Guid>? CartItemIds { get; set; }
-}
-
-public class CheckoutSelectedRequest
-{
-    public List<Guid> CartItemIds { get; set; } = new();
-    public PaymentMethod PaymentMethod { get; set; }
-    public CheckoutShippingInfo? Shipping { get; set; }
 }
 
 public class ApplyCouponRequest

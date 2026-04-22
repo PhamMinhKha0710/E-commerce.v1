@@ -37,16 +37,4 @@ public class AuthController : ControllerBase
         var result = await _mediator.Send(command);
         return Ok(result);
     }
-    
-    /// <summary>
-    /// [Deprecated] Endpoint sanity-check role Admin, chỉ còn giữ lại để tránh phá
-    /// client cũ; dùng <c>GET api/v1/dev/sanity/admin-profile</c> ở môi trường Development.
-    /// </summary>
-    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
-    [HttpGet("admin-profile")]
-    [Obsolete("Use GET api/v1/dev/sanity/admin-profile instead (Development only).")]
-    public IActionResult AdminProfile()
-    {
-        return Ok(new { message = "Chào mừng Admin! Dữ liệu tuyệt mật của hệ thống đã được cấp." });
-    }
 }

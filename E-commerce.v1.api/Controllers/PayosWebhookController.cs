@@ -22,11 +22,6 @@ public class PayosWebhookController : ControllerBase
     [HttpPost("/api/v1/webhooks/payos")]
     public Task<IActionResult> PostNew([FromBody] JsonElement payload) => PostInternal(payload);
 
-    /// <summary>[Deprecated] Dùng <c>POST /api/v1/webhooks/payos</c>.</summary>
-    [HttpPost("/api/v1/payment/payos/webhook")]
-    [Obsolete("Use POST /api/v1/webhooks/payos instead.")]
-    public Task<IActionResult> Post([FromBody] JsonElement payload) => PostInternal(payload);
-
     private async Task<IActionResult> PostInternal(JsonElement payload)
     {
         // Cần raw JSON để verify signature; tránh re-serialize làm sai hash.

@@ -22,12 +22,6 @@ public class PayosPaymentController : ControllerBase
     public async Task<ActionResult<CreatePayosPaymentLinkResponse>> Create([FromBody] CreatePayosPaymentLinkRequest request)
         => await CreateInternal(request);
 
-    /// <summary>[Deprecated] Dùng <c>POST api/v1/payment/payos</c>.</summary>
-    [HttpPost("create")]
-    [Obsolete("Use POST api/v1/payment/payos instead.")]
-    public async Task<ActionResult<CreatePayosPaymentLinkResponse>> CreateLegacy([FromBody] CreatePayosPaymentLinkRequest request)
-        => await CreateInternal(request);
-
     private async Task<ActionResult<CreatePayosPaymentLinkResponse>> CreateInternal(CreatePayosPaymentLinkRequest request)
     {
         var userId = User.GetRequiredUserId();

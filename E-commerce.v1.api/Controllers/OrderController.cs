@@ -46,12 +46,6 @@ public class OrderController : ControllerBase
     public async Task<ActionResult<CreateShipmentResponse>> CreateShipment(Guid orderId, [FromBody] CreateShipmentRequest body)
         => await CreateShipmentInternal(orderId, body);
 
-    /// <summary>[Deprecated] Dùng <c>POST api/v1/orders/{orderId}/shipment</c>.</summary>
-    [HttpPost("{orderId:guid}/create-shipment")]
-    [Obsolete("Use POST api/v1/orders/{orderId}/shipment instead.")]
-    public async Task<ActionResult<CreateShipmentResponse>> CreateShipmentLegacy(Guid orderId, [FromBody] CreateShipmentRequest body)
-        => await CreateShipmentInternal(orderId, body);
-
     private async Task<ActionResult<CreateShipmentResponse>> CreateShipmentInternal(Guid orderId, CreateShipmentRequest body)
     {
         var userId = User.GetRequiredUserId();

@@ -1,8 +1,5 @@
 using E_commerce.v1.Application.DTOs.Common;
 using E_commerce.v1.Application.DTOs.Product;
-using E_commerce.v1.Application.Features.Products.Commands.CreateProduct;
-using E_commerce.v1.Application.Features.Products.Commands.DeleteProduct;
-using E_commerce.v1.Application.Features.Products.Commands.UpdateProduct;
 using E_commerce.v1.Application.Features.Products.Queries.GetProductById;
 using E_commerce.v1.Application.Features.Products.Queries.GetProducts;
 using E_commerce.v1.Application.Features.Reviews.Commands.PostReview;
@@ -67,37 +64,6 @@ public class ProductsController : ControllerBase
         };
         var reviewId = await _mediator.Send(command);
         return Ok(reviewId);
-    }
-
-    /// <summary>[Deprecated] Dùng <c>POST api/v1/admin/products</c>.</summary>
-    [HttpPost]
-    [Authorize(Roles = "Admin")]
-    [Obsolete("Use POST api/v1/admin/products instead.")]
-    public async Task<ActionResult<Guid>> CreateProduct([FromBody] CreateProductCommand command)
-    {
-        var productId = await _mediator.Send(command);
-        return CreatedAtAction(nameof(GetProductById), new { id = productId }, productId);
-    }
-
-    /// <summary>[Deprecated] Dùng <c>PUT api/v1/admin/products/{id}</c>.</summary>
-    [HttpPut("{id}")]
-    [Authorize(Roles = "Admin")]
-    [Obsolete("Use PUT api/v1/admin/products/{id} instead.")]
-    public async Task<ActionResult> UpdateProduct(Guid id, [FromBody] UpdateProductCommand command)
-    {
-        await _mediator.Send(command with { Id = id });
-        return NoContent();
-    }
-
-    /// <summary>[Deprecated] Dùng <c>DELETE api/v1/admin/products/{id}</c>.</summary>
-    [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
-    [Obsolete("Use DELETE api/v1/admin/products/{id} instead.")]
-    public async Task<ActionResult> DeleteProduct(Guid id)
-    {
-        var command = new DeleteProductCommand(id);
-        await _mediator.Send(command);
-        return NoContent();
     }
 }
 
