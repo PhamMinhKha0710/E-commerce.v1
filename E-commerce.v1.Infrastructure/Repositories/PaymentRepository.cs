@@ -41,24 +41,22 @@ public class PaymentRepository : IPaymentRepository
             return;
 
         var expiresAt = nowUtc.Add(ttl);
-        var productIds = order.Items.Select(i => i.ProductId).Distinct().ToList();
-        var lockedProducts = await _checkoutRepository.LockProductsForCheckoutAsync(productIds, cancellationToken);
 
+        // Atomic stock decrement to avoid oversell under concurrency.
         foreach (var item in order.Items)
         {
-            if (!lockedProducts.TryGetValue(item.ProductId, out var product))
-                throw new NotFoundException("Sản phẩm không tồn tại.");
-            if (!product.IsActive)
-                throw new BadRequestException($"Sản phẩm '{product.Name}' đã ngừng bán.");
-            if (product.Stock < item.Quantity)
-                throw new BadRequestException($"Sản phẩm '{product.Name}' không đủ tồn kho.");
+            // Only reserve active products and ensure stock is sufficient.
+            var affected = await _context.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE Products SET Stock = Stock - {item.Quantity} WHERE Id = {item.ProductId} AND IsActive = 1 AND Stock >= {item.Quantity}",
+                cancellationToken);
 
-            product.Stock -= item.Quantity;
+            if (affected != 1)
+                throw new BadRequestException("Một số sản phẩm không đủ tồn kho hoặc đã ngừng bán.");
 
             _context.StockReservations.Add(new StockReservation
             {
                 OrderId = order.Id,
-                ProductId = product.Id,
+                ProductId = item.ProductId,
                 Quantity = item.Quantity,
                 Status = StockReservationStatus.Reserved,
                 ExpiresAt = expiresAt
@@ -74,13 +72,11 @@ public class PaymentRepository : IPaymentRepository
         if (reservations.Count == 0)
             return;
 
-        var productIds = reservations.Select(r => r.ProductId).Distinct().ToList();
-        var lockedProducts = await _checkoutRepository.LockProductsForCheckoutAsync(productIds, cancellationToken);
-
         foreach (var r in reservations)
         {
-            if (lockedProducts.TryGetValue(r.ProductId, out var product))
-                product.Stock += r.Quantity;
+            await _context.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE Products SET Stock = Stock + {r.Quantity} WHERE Id = {r.ProductId}",
+                cancellationToken);
 
             r.Status = StockReservationStatus.Released;
             r.ReleasedAt = nowUtc;

@@ -4,6 +4,7 @@ using E_commerce.v1.Application.Features.Payment.Commands.ProcessPayosWebhook;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace E_commerce.v1.api.Controllers;
 
@@ -20,6 +21,8 @@ public class PayosWebhookController : ControllerBase
 
     /// <summary>Webhook callback từ PayOS.</summary>
     [HttpPost("/api/v1/webhooks/payos")]
+    [EnableRateLimiting("WebhooksPerIp")]
+    [RequestSizeLimit(128 * 1024)] // 128 KB
     public Task<IActionResult> PostNew([FromBody] JsonElement payload) => PostInternal(payload);
 
     private async Task<IActionResult> PostInternal(JsonElement payload)

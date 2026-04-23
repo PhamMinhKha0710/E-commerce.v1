@@ -26,11 +26,19 @@ public class CheckoutRepository : ICheckoutRepository
 
     public async Task<Dictionary<Guid, Product>> LockProductsForCheckoutAsync(IReadOnlyCollection<Guid> productIds, CancellationToken cancellationToken)
     {
-        var list = await _context.Products
-            .Where(p => productIds.Contains(p.Id))
-            .ToListAsync(cancellationToken);
-
-        return list.ToDictionary(p => p.Id, p => p);
+        // NOTE: This method is intentionally lock-acquiring to avoid oversell under concurrency.
+        // SQL Server lock hints ensure writers serialize on the same rows in the current transaction.
+        var result = new Dictionary<Guid, Product>();
+        foreach (var id in productIds.Distinct())
+        {
+            var list = await _context.Products
+                .FromSqlInterpolated($"SELECT * FROM Products WITH (UPDLOCK, ROWLOCK) WHERE Id = {id}")
+                .ToListAsync(cancellationToken);
+            var product = list.FirstOrDefault();
+            if (product != null)
+                result[id] = product;
+        }
+        return result;
     }
 
     public Task<Coupon?> GetCouponByIdAsync(Guid couponId, CancellationToken cancellationToken)
