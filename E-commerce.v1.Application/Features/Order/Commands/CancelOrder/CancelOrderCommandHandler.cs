@@ -53,9 +53,11 @@ public class CancelOrderCommandHandler : IRequestHandler<CancelOrderCommand, Uni
                 throw new BadRequestException("Đơn hàng đã thanh toán, vui lòng sử dụng luồng hoàn tiền.");
 
             order.Status = OrderStatus.Cancelled;
+            // Mark payment terminal as well to prevent late/forged payment updates.
+            order.PaymentStatus = PaymentStatus.Cancelled;
             await _paymentRepository.ReleaseReservedStockAsync(order.Id, DateTime.UtcNow, ct);
             await _unitOfWork.SaveChangesAsync(ct);
-        }, IsolationLevel.ReadCommitted, cancellationToken);
+        }, IsolationLevel.Serializable, cancellationToken);
 
         _logger.LogInformation("Order cancelled. OrderId={OrderId}", request.OrderId);
         return Unit.Value;

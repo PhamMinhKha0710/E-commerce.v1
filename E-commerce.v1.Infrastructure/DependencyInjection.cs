@@ -6,6 +6,7 @@ using E_commerce.v1.Infrastructure.Repositories;
 using E_commerce.v1.Infrastructure.Security;
 using E_commerce.v1.Infrastructure.ExternalServices.Shipping;
 using E_commerce.v1.Infrastructure.ExternalServices.Payments;
+using E_commerce.v1.Infrastructure.BackgroundServices;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -51,6 +52,8 @@ public static class DependencyInjection
         services.AddScoped<IVariantReadRepository, VariantReadRepository>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IPaymentRepository, PaymentRepository>();
+
+        services.AddHostedService<ExpiredStockReservationReaper>();
 
         services.Configure<AhamoveOptions>(configuration.GetSection(AhamoveOptions.SectionName));
         services.AddHttpClient<IAhamoveClient, AhamoveClient>();
